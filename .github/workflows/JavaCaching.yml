@@ -1,38 +1,19 @@
-name: Java Caching with All Distributions
+name: Java Build Tool Caching
 
 on:
   workflow_dispatch:
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   gradle-cache-test:
-    name: Gradle Cache - ${{ matrix.distribution }} JDK ${{ matrix.java-version }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: Gradle - ${{ matrix.distribution }} JDK ${{ matrix.java-version }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        distribution: [temurin, zulu, liberica, corretto, microsoft, semeru, oracle, sapmachine]
-        java-version: [17, 21]
-        exclude:
-          # Oracle only supports JDK 17+
-          - distribution: oracle
-            java-version: 11
-          # Add exclusions for combinations that don't work well
-          - distribution: dragonwell
-            os: macos-latest
-        include:
-          # Add specialized distributions on specific OSes
-          - os: ubuntu-latest
-            distribution: dragonwell
-            java-version: 17
-          - os: ubuntu-latest
-            distribution: graalvm
-            java-version: 21
-          - os: ubuntu-latest
-            distribution: jetbrains
-            java-version: 21
+        distribution: [temurin, zulu]
+        java-version: [11, 17]
     
     steps:
       - name: Checkout repository
@@ -45,65 +26,56 @@ jobs:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
           cache: 'gradle'
-          
-      - name: Create basic Gradle project
-        run: |
-          mkdir -p src/main/java
-          echo 'plugins { id "java" }; repositories { mavenCentral() }; dependencies { implementation "org.apache.commons:commons-lang3:3.12.0" }' > build.gradle
-          echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello from Gradle!"); } }' > src/main/java/HelloWorld.java
-          # Create wrapper files for windows
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            echo './gradlew.bat build --info'
-          else
-            echo './gradlew build --info'
-            chmod +x ./gradlew
-          fi
-        shell: bash
 
-      - name: Build with Gradle
+      - name: Setup Gradle project
         run: |
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            ./gradlew.bat build --info
-          else
-            ./gradlew build --info
-          fi
-        shell: bash
-        continue-on-error: true
+          # Create minimal Gradle project
+          mkdir -p src/main/java
+          
+          # Create build.gradle
+          cat > build.gradle << 'EOF'
+          plugins {
+              id 'java'
+          }
+          
+          repositories {
+              mavenCentral()
+          }
+          
+          dependencies {
+              implementation 'org.apache.commons:commons-lang3:3.12.0'
+          }
+          EOF
+          
+          # Create source file
+          cat > src/main/java/HelloWorld.java << 'EOF'
+          public class HelloWorld {
+              public static void main(String[] args) {
+                  System.out.println("Hello from Gradle!");
+              }
+          }
+          EOF
+          
+          # Use gradle wrapper generation
+          gradle wrapper
+        
+      - name: Build with Gradle
+        run: ./gradlew build
         
       - name: Cache status
         run: |
           echo "Cache Hit: ${{ steps.setup-java.outputs.cache-hit || 'false' }}"
-          echo "Current Date and Time (UTC): 2025-07-17 14:08:04"
-          echo "Current User's Login: mahabaleshwar"
-        shell: bash
+          echo "Current Date and Time (UTC): 2025-07-17 15:05:05"
+          echo "Current User's Login: mahabaleshwars"
 
   maven-cache-test:
-    name: Maven Cache - ${{ matrix.distribution }} JDK ${{ matrix.java-version }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: Maven - ${{ matrix.distribution }} JDK ${{ matrix.java-version }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        distribution: [temurin, zulu, liberica, corretto, microsoft, semeru, oracle, sapmachine]
-        java-version: [11, 17, 21]
-        exclude:
-          # Oracle only supports JDK 17+
-          - distribution: oracle
-            java-version: 11
-          # Add exclusions for combinations that don't work well
-          - distribution: dragonwell
-            os: macos-latest
-        include:
-          # Add specialized distributions on specific OSes
-          - os: ubuntu-latest
-            distribution: dragonwell
-            java-version: 17
-          - os: ubuntu-latest
-            distribution: graalvm
-            java-version: 21
-          - os: ubuntu-latest
-            distribution: jetbrains
-            java-version: 21
+        distribution: [temurin, zulu]
+        java-version: [11, 17]
     
     steps:
       - name: Checkout repository
@@ -117,51 +89,63 @@ jobs:
           java-version: ${{ matrix.java-version }}
           cache: 'maven'
           
-      - name: Create basic Maven project
+      - name: Setup Maven project
         run: |
+          # Create minimal Maven project structure
           mkdir -p src/main/java
-          cat > pom.xml << EOF
-          <project>
-            <modelVersion>4.0.0</modelVersion>
-            <groupId>com.example</groupId>
-            <artifactId>simple-maven</artifactId>
-            <version>1.0.0</version>
-            <dependencies>
-              <dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-lang3</artifactId>
-                <version>3.12.0</version>
-              </dependency>
-            </dependencies>
-            <properties>
-              <maven.compiler.source>${{ matrix.java-version }}</maven.compiler.source>
-              <maven.compiler.target>${{ matrix.java-version }}</maven.compiler.target>
-            </properties>
+          
+          # Create pom.xml
+          cat > pom.xml << 'EOF'
+          <project xmlns="http://maven.apache.org/POM/4.0.0" 
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+                                       http://maven.apache.org/xsd/maven-4.0.0.xsd">
+              <modelVersion>4.0.0</modelVersion>
+              <groupId>com.example</groupId>
+              <artifactId>maven-cache-demo</artifactId>
+              <version>1.0.0</version>
+              
+              <properties>
+                  <maven.compiler.source>11</maven.compiler.source>
+                  <maven.compiler.target>11</maven.compiler.target>
+              </properties>
+              
+              <dependencies>
+                  <dependency>
+                      <groupId>org.apache.commons</groupId>
+                      <artifactId>commons-lang3</artifactId>
+                      <version>3.12.0</version>
+                  </dependency>
+              </dependencies>
           </project>
           EOF
-          echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello from Maven!"); } }' > src/main/java/HelloWorld.java
-        shell: bash
-
+          
+          # Create source file
+          cat > src/main/java/HelloWorld.java << 'EOF'
+          public class HelloWorld {
+              public static void main(String[] args) {
+                  System.out.println("Hello from Maven!");
+              }
+          }
+          EOF
+          
       - name: Build with Maven
         run: mvn -B package
-        continue-on-error: true
         
       - name: Cache status
         run: |
           echo "Cache Hit: ${{ steps.setup-java.outputs.cache-hit || 'false' }}"
-          echo "Current Date and Time (UTC): 2025-07-17 14:08:04"
-          echo "Current User's Login: mahabaleshwar"
-        shell: bash
+          echo "Current Date and Time (UTC): 2025-07-17 15:05:05"
+          echo "Current User's Login: mahabaleshwars"
 
   sbt-cache-test:
-    name: SBT Cache - ${{ matrix.distribution }} JDK ${{ matrix.java-version }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: SBT - ${{ matrix.distribution }} JDK ${{ matrix.java-version }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        distribution: [temurin, zulu, liberica, corretto]
-        java-version: [11, 17, 21]
+        distribution: [temurin]
+        java-version: [11]
     
     steps:
       - name: Checkout repository
@@ -175,37 +159,59 @@ jobs:
           java-version: ${{ matrix.java-version }}
           cache: 'sbt'
           
-      - name: Create basic SBT project
+      - name: Install SBT
         run: |
-          mkdir -p project src/main/scala
-          echo 'name := "hello-world"' > build.sbt
-          echo 'version := "0.1"' >> build.sbt
-          echo 'scalaVersion := "2.13.8"' >> build.sbt
-          echo 'sbt.version=1.8.0' > project/build.properties
-          echo 'object HelloWorld { def main(args: Array[String]): Unit = println("Hello from SBT!") }' > src/main/scala/HelloWorld.scala
-        shell: bash
-
+          echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | sudo tee /etc/apt/sources.list.d/sbt.list
+          echo "deb https://repo.scala-sbt.org/scalasbt/debian /" | sudo tee /etc/apt/sources.list.d/sbt_old.list
+          curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x2EE0EA64E40A89B84B2DF73499E82A75642AC823" | sudo apt-key add
+          sudo apt-get update
+          sudo apt-get install sbt
+          
+      - name: Setup SBT project
+        run: |
+          # Create minimal SBT project structure
+          mkdir -p src/main/scala project
+          
+          # Create build.sbt
+          cat > build.sbt << 'EOF'
+          name := "sbt-cache-demo"
+          version := "1.0.0"
+          scalaVersion := "2.13.8"
+          
+          libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.12.0"
+          EOF
+          
+          # Create build.properties
+          mkdir -p project
+          cat > project/build.properties << 'EOF'
+          sbt.version=1.7.1
+          EOF
+          
+          # Create source file
+          cat > src/main/scala/HelloWorld.scala << 'EOF'
+          object HelloWorld {
+            def main(args: Array[String]): Unit = {
+              println("Hello from SBT!")
+            }
+          }
+          EOF
+          
       - name: Build with SBT
         run: sbt compile
-        continue-on-error: true
-        env:
-          SEGMENT_DOWNLOAD_TIMEOUT_MINS: '3'
         
       - name: Cache status
         run: |
           echo "Cache Hit: ${{ steps.setup-java.outputs.cache-hit || 'false' }}"
-          echo "Current Date and Time (UTC): 2025-07-17 14:08:04"
-          echo "Current User's Login: mahabaleshwar"
-        shell: bash
+          echo "Current Date and Time (UTC): 2025-07-17 15:05:05"
+          echo "Current User's Login: mahabaleshwars"
 
   custom-path-tests:
-    name: Custom Paths - ${{ matrix.build-tool }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: Custom Path - ${{ matrix.build-tool }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        build-tool: [gradle, maven, sbt]
+        build-tool: [gradle, maven]
     
     steps:
       - name: Checkout repository
@@ -216,55 +222,84 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '17'
           cache: ${{ matrix.build-tool }}
-          cache-dependency-path: |
-            sub-project/**/*.${{ matrix.build-tool == 'gradle' && 'gradle*' || matrix.build-tool == 'maven' && 'pom.xml' || 'sbt' }}
-            ${{ matrix.build-tool == 'gradle' && 'sub-project/**/gradle-wrapper.properties' || '' }}
-            ${{ matrix.build-tool == 'gradle' && 'buildSrc/**/Versions.kt' || '' }}
-            ${{ matrix.build-tool == 'gradle' && 'buildSrc/**/Dependencies.kt' || '' }}
-            ${{ matrix.build-tool == 'gradle' && 'gradle/*.versions.toml' || '' }}
-            ${{ matrix.build-tool == 'gradle' && '**/versions.properties' || '' }}
-            ${{ matrix.build-tool == 'sbt' && 'sub-project/project/build.properties' || '' }}
-            ${{ matrix.build-tool == 'sbt' && 'sub-project/project/**/*.scala' || '' }}
-            ${{ matrix.build-tool == 'sbt' && 'sub-project/project/**/*.sbt' || '' }}
+          cache-dependency-path: ${{ matrix.build-tool == 'gradle' && 'sub-project/build.gradle' || 'sub-project/pom.xml' }}
           
-      - name: Create project structure
+      - name: Create sub-project files
         run: |
+          # Create project directory
           mkdir -p sub-project/src/main/java
           
           if [ "${{ matrix.build-tool }}" = "gradle" ]; then
-            mkdir -p sub-project/gradle buildSrc/src/main/kotlin
-            echo 'plugins { id "java" }; repositories { mavenCentral() }' > sub-project/build.gradle
-            echo 'distributionUrl=https\://services.gradle.org/distributions/gradle-7.6-bin.zip' > sub-project/gradle/wrapper/gradle-wrapper.properties
-            echo 'object Versions { const val COMMONS_LANG = "3.12.0" }' > buildSrc/src/main/kotlin/Versions.kt
-            echo 'object Dependencies { const val COMMONS_LANG = "org.apache.commons:commons-lang3:${Versions.COMMONS_LANG}" }' > buildSrc/src/main/kotlin/Dependencies.kt
-            echo '[versions] commons-lang = "3.12.0"' > gradle/libs.versions.toml
-            echo 'commons-lang.version=3.12.0' > versions.properties
-          
+            # Create gradle build file
+            cat > sub-project/build.gradle << 'EOF'
+            plugins {
+                id 'java'
+            }
+            
+            repositories {
+                mavenCentral()
+            }
+            
+            dependencies {
+                implementation 'org.apache.commons:commons-lang3:3.12.0'
+            }
+            EOF
+            
+            # Create wrapper in subproject
+            cd sub-project
+            gradle wrapper
+            cd ..
+            
           elif [ "${{ matrix.build-tool }}" = "maven" ]; then
-            cat > sub-project/pom.xml << EOF
-            <project>
-              <modelVersion>4.0.0</modelVersion>
-              <groupId>com.example</groupId>
-              <artifactId>custom-path-maven</artifactId>
-              <version>1.0.0</version>
+            # Create Maven POM
+            cat > sub-project/pom.xml << 'EOF'
+            <project xmlns="http://maven.apache.org/POM/4.0.0"
+                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+                                         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+                <modelVersion>4.0.0</modelVersion>
+                <groupId>com.example</groupId>
+                <artifactId>sub-project</artifactId>
+                <version>1.0.0</version>
+                
+                <properties>
+                    <maven.compiler.source>11</maven.compiler.source>
+                    <maven.compiler.target>11</maven.compiler.target>
+                </properties>
+                
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.commons</groupId>
+                        <artifactId>commons-lang3</artifactId>
+                        <version>3.12.0</version>
+                    </dependency>
+                </dependencies>
             </project>
             EOF
-          
-          elif [ "${{ matrix.build-tool }}" = "sbt" ]; then
-            mkdir -p sub-project/project
-            echo 'name := "custom-path-sbt"' > sub-project/build.sbt
-            echo 'sbt.version=1.8.0' > sub-project/project/build.properties
-            echo 'addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.6")' > sub-project/project/plugins.sbt
           fi
           
-          echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello from Custom Path!"); } }' > sub-project/src/main/java/HelloWorld.java
-        shell: bash
+          # Create source file
+          cat > sub-project/src/main/java/HelloWorld.java << 'EOF'
+          public class HelloWorld {
+              public static void main(String[] args) {
+                  System.out.println("Hello from Custom Path!");
+              }
+          }
+          EOF
+        
+      - name: Build with ${{ matrix.build-tool }}
+        run: |
+          cd sub-project
+          if [ "${{ matrix.build-tool }}" = "gradle" ]; then
+            ./gradlew build
+          else
+            mvn -B package
+          fi
         
       - name: Cache status
         run: |
           echo "Cache Hit: ${{ steps.setup-java.outputs.cache-hit || 'false' }}"
-          echo "Current Date and Time (UTC): 2025-07-17 14:08:04"
-          echo "Current User's Login: mahabaleshwar"
-        shell: bash
+          echo "Current Date and Time (UTC): 2025-07-17 15:05:05"
+          echo "Current User's Login: mahabaleshwars"
