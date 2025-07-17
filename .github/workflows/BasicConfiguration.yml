@@ -1,0 +1,46 @@
+name: Basic Configuration
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-jdk-matrix:
+    name: Test All Supported JDKs & OSes
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        distribution: ['temurin', zulu', 'liberica', 'microsoft', 'corretto', 'semeru', 'oracle', 'dragonwell', 'sapmachine', 'graalvm','jetbrains']
+        java-version: ['21','17','11','8',15-ea','17.0.12','8.0.282+8']
+        exclude:
+          # Exclude GraalVM versions not recommended/licensed
+          - distribution: graalvm
+            java-version: '8'
+          - distribution: graalvm
+            java-version: '11'
+          - distribution: graalvm
+            java-version: '15-ea'
+          - distribution: graalvm
+            java-version: '8.0.282+8'
+          # Exclude Oracle EA versions (not always available)
+          - distribution: oracle
+            java-version: '15-ea'
+          # Exclude JetBrains EA versions (not always available)
+          - distribution: jetbrains
+            java-version: '15-ea'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java (${{ matrix.distribution }}, ${{ matrix.java-version }})
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java-version }}
+
+      - name: Validate Java installation
+        run: |
+          java -version
+          javac -version
