@@ -1,0 +1,29 @@
+name: Basic Configuration EA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-java:
+    name: ${{ matrix.distribution }} JDK ${{ matrix.java-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        distribution: [temurin, zulu, liberica, corretto, microsoft, semeru, oracle, dragonwell, sapmachine, graalvm, jetbrains]
+        java-version: [21-ea, 22-ea]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup ${{ matrix.distribution }} JDK ${{ matrix.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java-version }}
+
+      - name: Verify Java installation
+        run: |
+          java -version
+          javac -version
