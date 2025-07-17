@@ -1,7 +1,9 @@
-name: Basic Configuration
+name: Java Distribution Matrix Test
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [ main ]
 
 jobs:
   test-java:
@@ -31,6 +33,11 @@ jobs:
           # SAPMachine only supports 11+
           - distribution: sapmachine
             java-version: 8
+            
+          # Temurin doesn't support Java 8 on macOS
+          - distribution: temurin
+            java-version: 8
+            os: macos-latest
 
           # Dragonwell doesn't support 21 or macOS
           - distribution: dragonwell
@@ -38,25 +45,38 @@ jobs:
           - distribution: dragonwell
             os: macos-latest
 
-          # GraalVM only supports 17+ and only on Ubuntu
+          # GraalVM only supports 17.0.12+ and 21+ and only on Ubuntu
           - distribution: graalvm
             java-version: 8
           - distribution: graalvm
             java-version: 11
+          - distribution: graalvm
+            java-version: 17
           - distribution: graalvm
             os: windows-latest
           - distribution: graalvm
             os: macos-latest
 
-          # JetBrains only supports 17+ and only on Ubuntu (API limits)
+          # JetBrains only supports 21+ and only on Ubuntu (API limits)
           - distribution: jetbrains
             java-version: 8
           - distribution: jetbrains
             java-version: 11
           - distribution: jetbrains
+            java-version: 17
+          - distribution: jetbrains
             os: windows-latest
           - distribution: jetbrains
             os: macos-latest
+        include:
+          # Add specific version for GraalVM 17
+          - distribution: graalvm
+            java-version: '17.0.12'
+            os: ubuntu-latest
+          # Add specific version for JetBrains 17
+          - distribution: jetbrains
+            java-version: '17.0.14'
+            os: ubuntu-latest
 
     steps:
       - name: Checkout repository
@@ -67,8 +87,126 @@ jobs:
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Add token to avoid rate limiting
 
       - name: Verify Java installation
         run: |
           java -version
           javac -version
+
+      - name: Create and run HelloWorld app
+        run: |
+          echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello from ${{ matrix.distribution }} ${{ matrix.java-version }} on ${{ matrix.os }}"); } }' > HelloWorld.java
+          javac HelloWorld.java
+          java HelloWorld
+
+      - name: Display build info
+        run: |
+          echo "Built by: mahabaleshwar"
+
+  test-ea-versions:
+    name: EA - ${{ matrix.distribution }} JDK ${{ matrix.java-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Temurin EA versions
+          - distribution: temurin
+            java-version: '21-ea'
+            os: ubuntu-latest
+          - distribution: temurin
+            java-version: '21-ea'
+            os: windows-latest
+          - distribution: temurin
+            java-version: '21-ea'
+            os: macos-latest
+          - distribution: temurin
+            java-version: '22-ea'
+            os: ubuntu-latest
+          - distribution: temurin
+            java-version: '22-ea'
+            os: windows-latest
+          - distribution: temurin
+            java-version: '22-ea'
+            os: macos-latest
+            
+          # SAPMachine EA versions
+          - distribution: sapmachine
+            java-version: '21-ea'
+            os: ubuntu-latest
+          - distribution: sapmachine
+            java-version: '21-ea'
+            os: windows-latest
+          - distribution: sapmachine
+            java-version: '21-ea'
+            os: macos-latest
+          - distribution: sapmachine
+            java-version: '22-ea'
+            os: ubuntu-latest
+          - distribution: sapmachine
+            java-version: '22-ea'
+            os: windows-latest
+          - distribution: sapmachine
+            java-version: '22-ea'
+            os: macos-latest
+            
+          # Zulu EA versions (only Ubuntu and Windows)
+          - distribution: zulu
+            java-version: '22-ea'
+            os: ubuntu-latest
+          - distribution: zulu
+            java-version: '22-ea'
+            os: windows-latest
+            
+          # GraalVM EA versions
+          - distribution: graalvm
+            java-version: '22-ea'
+            os: ubuntu-latest
+          - distribution: graalvm
+            java-version: '22-ea'
+            os: windows-latest
+          - distribution: graalvm
+            java-version: '22-ea'
+            os: macos-latest
+            
+          # JetBrains EA versions
+          - distribution: jetbrains
+            java-version: '21-ea'
+            os: ubuntu-latest
+          - distribution: jetbrains
+            java-version: '21-ea'
+            os: windows-latest
+          - distribution: jetbrains
+            java-version: '21-ea'
+            os: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup EA ${{ matrix.distribution }} JDK ${{ matrix.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java-version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Add token to avoid rate limiting
+
+      - name: Verify EA Java installation
+        run: |
+          java -version
+          javac -version
+        continue-on-error: true  # EA versions might be unstable
+
+      - name: Create and run HelloWorld app with EA JDK
+        run: |
+          echo 'public class HelloWorldEA { public static void main(String[] args) { System.out.println("Hello from EA ${{ matrix.distribution }} ${{ matrix.java-version }} on ${{ matrix.os }}"); } }' > HelloWorldEA.java
+          javac HelloWorldEA.java
+          java HelloWorldEA
+        continue-on-error: true  # EA versions might be unstable
+
+      - name: Display build info
+        run: |
+          echo "Built by: mahabaleshwar"
