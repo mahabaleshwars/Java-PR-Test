@@ -4,43 +4,71 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-jdk-matrix:
-    name: Test All Supported JDKs & OSes
+  test-java:
+    name: ${{ matrix.distribution }} JDK ${{ matrix.java-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        distribution: ['temurin', zulu', 'liberica', 'microsoft', 'corretto', 'semeru', 'oracle', 'dragonwell', 'sapmachine', 'graalvm','jetbrains']
-        java-version: ['21','17','11','8',15-ea','17.0.12','8.0.282+8']
+        distribution: [temurin, zulu, liberica, corretto, microsoft, semeru, oracle, dragonwell, sapmachine, graalvm, jetbrains]
+        java-version: [8, 11, 17, 21]
         exclude:
-          # Exclude GraalVM versions not recommended/licensed
-          - distribution: graalvm
-            java-version: '8'
-          - distribution: graalvm
-            java-version: '11'
-          - distribution: graalvm
-            java-version: '15-ea'
-          - distribution: graalvm
-            java-version: '8.0.282+8'
-          # Exclude Oracle EA versions (not always available)
+          # Oracle only supports JDK 17+
           - distribution: oracle
-            java-version: '15-ea'
-          # Exclude JetBrains EA versions (not always available)
+            java-version: 8
+          - distribution: oracle
+            java-version: 11
+
+          # Microsoft only supports 11+
+          - distribution: microsoft
+            java-version: 8
+
+          # Semeru only supports 11+
+          - distribution: semeru
+            java-version: 8
+
+          # SAPMachine only supports 11+
+          - distribution: sapmachine
+            java-version: 8
+
+          # Dragonwell doesn't support 21 or macOS
+          - distribution: dragonwell
+            java-version: 21
+          - distribution: dragonwell
+            os: macos-latest
+
+          # GraalVM only supports 17+ and only on Ubuntu
+          - distribution: graalvm
+            java-version: 8
+          - distribution: graalvm
+            java-version: 11
+          - distribution: graalvm
+            os: windows-latest
+          - distribution: graalvm
+            os: macos-latest
+
+          # JetBrains only supports 17+ and only on Ubuntu (API limits)
           - distribution: jetbrains
-            java-version: '15-ea'
+            java-version: 8
+          - distribution: jetbrains
+            java-version: 11
+          - distribution: jetbrains
+            os: windows-latest
+          - distribution: jetbrains
+            os: macos-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Java (${{ matrix.distribution }}, ${{ matrix.java-version }})
+      - name: Setup ${{ matrix.distribution }} JDK ${{ matrix.java-version }}
         uses: actions/setup-java@v4
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
 
-      - name: Validate Java installation
+      - name: Verify Java installation
         run: |
           java -version
           javac -version
