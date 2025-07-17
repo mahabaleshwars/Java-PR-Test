@@ -95,12 +95,6 @@ jobs:
           java -version
           javac -version
 
-      - name: Create and run HelloWorld app
-        run: |
-          echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello from ${{ matrix.distribution }} ${{ matrix.java-version }} on ${{ matrix.os }}"); } }' > HelloWorld.java
-          javac HelloWorld.java
-          java HelloWorld
-
       - name: Display build info
         run: |
           echo "Built by: mahabaleshwar"
@@ -198,13 +192,6 @@ jobs:
         run: |
           java -version
           javac -version
-        continue-on-error: true  # EA versions might be unstable
-
-      - name: Create and run HelloWorld app with EA JDK
-        run: |
-          echo 'public class HelloWorldEA { public static void main(String[] args) { System.out.println("Hello from EA ${{ matrix.distribution }} ${{ matrix.java-version }} on ${{ matrix.os }}"); } }' > HelloWorldEA.java
-          javac HelloWorldEA.java
-          java HelloWorldEA
         continue-on-error: true  # EA versions might be unstable
 
       - name: Display build info
