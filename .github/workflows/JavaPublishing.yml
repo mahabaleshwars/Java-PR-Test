@@ -1,0 +1,502 @@
+name: Java Publishing Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-maven-publishing:
+    name: Maven Publishing with ${{ matrix.distribution }} JDK ${{ matrix.java-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        distribution: [temurin, zulu, liberica, corretto, microsoft, semeru]
+        java-version: [11, 17]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK for GitHub Packages
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java-version }}
+          server-id: github
+          
+      - name: Create Maven project structure
+        run: |
+          mkdir -p src/main/java/com/example/publishing
+          
+      - name: Create Java class
+        shell: bash
+        run: |
+          cat > src/main/java/com/example/publishing/HelloPublisher.java << 'EOF'
+          package com.example.publishing;
+          
+          public class HelloPublisher {
+              public String getMessage() {
+                  return "Hello from Maven Publisher!";
+              }
+              
+              public static void main(String[] args) {
+                  System.out.println(new HelloPublisher().getMessage());
+                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:49:19");
+                  System.out.println("Current User's Login: mahabaleshwars");
+              }
+          }
+          EOF
+          
+      - name: Create pom.xml for GitHub Packages
+        shell: bash
+        run: |
+          cat > pom.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <project xmlns="http://maven.apache.org/POM/4.0.0"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+              <modelVersion>4.0.0</modelVersion>
+          
+              <groupId>com.example</groupId>
+              <artifactId>publishing-demo</artifactId>
+              <version>1.0.0-SNAPSHOT</version>
+              <packaging>jar</packaging>
+          
+              <name>Java Publishing Demo</name>
+              <description>Demo project for GitHub Actions Java publishing</description>
+          
+              <properties>
+                  <java.version>11</java.version>
+                  <maven.compiler.source>${java.version}</maven.compiler.source>
+                  <maven.compiler.target>${java.version}</maven.compiler.target>
+                  <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+              </properties>
+          
+              <distributionManagement>
+                  <repository>
+                      <id>github</id>
+                      <name>GitHub Packages</name>
+                      <url>https://maven.pkg.github.com/${GITHUB_REPOSITORY}</url>
+                  </repository>
+              </distributionManagement>
+          
+              <build>
+                  <plugins>
+                      <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.11.0</version>
+                          <configuration>
+                              <source>${java.version}</source>
+                              <target>${java.version}</target>
+                          </configuration>
+                      </plugin>
+                      <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-source-plugin</artifactId>
+                          <version>3.3.0</version>
+                          <executions>
+                              <execution>
+                                  <id>attach-sources</id>
+                                  <goals>
+                                      <goal>jar</goal>
+                                  </goals>
+                              </execution>
+                          </executions>
+                      </plugin>
+                  </plugins>
+              </build>
+          </project>
+          EOF
+      
+      - name: Build with Maven (Dry Run)
+        run: mvn -B package --file pom.xml
+
+      - name: Print settings.xml for GitHub Packages
+        shell: bash
+        run: |
+          echo "Maven settings.xml for GitHub Packages:"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            cat "$HOME/.m2/settings.xml" || echo "settings.xml not found"
+          else
+            cat $HOME/.m2/settings.xml || echo "settings.xml not found"
+          fi
+
+      - name: Publish to GitHub Packages (Dry Run)
+        run: mvn help:effective-pom
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          
+      - name: Set up JDK for Maven Central
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java-version }}
+          server-id: maven
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_CENTRAL_TOKEN
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY || 'dummy-key' }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+      
+      - name: Update pom.xml for Maven Central
+        shell: bash
+        run: |
+          cat > pom.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <project xmlns="http://maven.apache.org/POM/4.0.0"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+              <modelVersion>4.0.0</modelVersion>
+          
+              <groupId>com.example</groupId>
+              <artifactId>publishing-demo</artifactId>
+              <version>1.0.0-SNAPSHOT</version>
+              <packaging>jar</packaging>
+          
+              <name>Java Publishing Demo</name>
+              <description>Demo project for GitHub Actions Java publishing</description>
+              <url>https://github.com/example/publishing-demo</url>
+              
+              <licenses>
+                  <license>
+                      <name>MIT License</name>
+                      <url>http://www.opensource.org/licenses/mit-license.php</url>
+                  </license>
+              </licenses>
+              
+              <developers>
+                  <developer>
+                      <name>Developer Name</name>
+                      <email>developer@example.com</email>
+                      <organization>Example Organization</organization>
+                      <organizationUrl>https://www.example.com</organizationUrl>
+                  </developer>
+              </developers>
+              
+              <scm>
+                  <connection>scm:git:git://github.com/example/publishing-demo.git</connection>
+                  <developerConnection>scm:git:ssh://github.com:example/publishing-demo.git</developerConnection>
+                  <url>https://github.com/example/publishing-demo/tree/main</url>
+              </scm>
+          
+              <properties>
+                  <java.version>11</java.version>
+                  <maven.compiler.source>${java.version}</maven.compiler.source>
+                  <maven.compiler.target>${java.version}</maven.compiler.target>
+                  <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+              </properties>
+          
+              <distributionManagement>
+                  <snapshotRepository>
+                      <id>maven</id>
+                      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+                  </snapshotRepository>
+                  <repository>
+                      <id>maven</id>
+                      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                  </repository>
+              </distributionManagement>
+          
+              <build>
+                  <plugins>
+                      <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.11.0</version>
+                          <configuration>
+                              <source>${java.version}</source>
+                              <target>${java.version}</target>
+                          </configuration>
+                      </plugin>
+                      <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-source-plugin</artifactId>
+                          <version>3.3.0</version>
+                          <executions>
+                              <execution>
+                                  <id>attach-sources</id>
+                                  <goals>
+                                      <goal>jar-no-fork</goal>
+                                  </goals>
+                              </execution>
+                          </executions>
+                      </plugin>
+                      <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-javadoc-plugin</artifactId>
+                          <version>3.5.0</version>
+                          <executions>
+                              <execution>
+                                  <id>attach-javadocs</id>
+                                  <goals>
+                                      <goal>jar</goal>
+                                  </goals>
+                              </execution>
+                          </executions>
+                      </plugin>
+                      <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-gpg-plugin</artifactId>
+                          <version>3.1.0</version>
+                          <executions>
+                              <execution>
+                                  <id>sign-artifacts</id>
+                                  <phase>verify</phase>
+                                  <goals>
+                                      <goal>sign</goal>
+                                  </goals>
+                                  <configuration>
+                                      <!-- Prevent gpg from using pinentry programs -->
+                                      <gpgArguments>
+                                          <arg>--pinentry-mode</arg>
+                                          <arg>loopback</arg>
+                                      </gpgArguments>
+                                  </configuration>
+                              </execution>
+                          </executions>
+                      </plugin>
+                  </plugins>
+              </build>
+          </project>
+          EOF
+      
+      - name: Print settings.xml for Maven Central
+        shell: bash
+        run: |
+          echo "Maven settings.xml for Maven Central:"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            cat "$HOME/.m2/settings.xml" || echo "settings.xml not found"
+          else
+            cat $HOME/.m2/settings.xml || echo "settings.xml not found"
+          fi
+      
+      - name: Verify Maven Central config (Dry Run)
+        run: mvn help:effective-pom -Prelease
+        env:
+          MAVEN_USERNAME: maven_username123
+          MAVEN_CENTRAL_TOKEN: maven_central_token_123
+          MAVEN_GPG_PASSPHRASE: gpg_passphrase_123
+
+      - name: Test with custom settings path
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java-version }}
+          server-id: github
+          settings-path: ${{ github.workspace }}
+      
+      - name: Verify custom settings path
+        shell: bash
+        run: |
+          echo "Custom settings.xml location:"
+          cat ${{ github.workspace }}/settings.xml || echo "Custom settings.xml not found"
+
+  test-gradle-publishing:
+    name: Gradle Publishing with ${{ matrix.distribution }} JDK ${{ matrix.java-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        distribution: [temurin, zulu, liberica, corretto, microsoft, semeru]
+        java-version: [11, 17]
+        
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java-version }}
+          
+      - name: Create Gradle project structure
+        run: |
+          mkdir -p src/main/java/com/example/publishing
+          
+      - name: Create Java class
+        shell: bash
+        run: |
+          cat > src/main/java/com/example/publishing/HelloPublisher.java << 'EOF'
+          package com.example.publishing;
+          
+          public class HelloPublisher {
+              public String getMessage() {
+                  return "Hello from Gradle Publisher!";
+              }
+              
+              public static void main(String[] args) {
+                  System.out.println(new HelloPublisher().getMessage());
+                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:49:19");
+                  System.out.println("Current User's Login: mahabaleshwars");
+              }
+          }
+          EOF
+          
+      - name: Create build.gradle for GitHub Packages
+        shell: bash
+        run: |
+          cat > build.gradle << 'EOF'
+          plugins {
+              id 'java-library'
+              id 'maven-publish'
+          }
+          
+          group = 'com.example'
+          version = '1.0.0-SNAPSHOT'
+          sourceCompatibility = '11'
+          
+          repositories {
+              mavenCentral()
+          }
+          
+          publishing {
+              repositories {
+                  maven {
+                      name = "GitHubPackages"
+                      url = uri("https://maven.pkg.github.com/${System.getenv('GITHUB_REPOSITORY')}")
+                      credentials {
+                          username = System.getenv("USERNAME")
+                          password = System.getenv("PASSWORD")
+                      }
+                  }
+              }
+              publications {
+                  gpr(MavenPublication) {
+                      from(components.java)
+                  }
+              }
+          }
+          
+          task helloPublishing {
+              doLast {
+                  println "Hello Gradle Publishing!"
+                  println "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:49:19"
+                  println "Current User's Login: mahabaleshwars"
+              }
+          }
+          EOF
+      
+      - name: Create settings.gradle
+        shell: bash
+        run: |
+          echo "rootProject.name = 'publishing-demo'" > settings.gradle
+      
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: wrapper
+      
+      - name: Build with Gradle
+        run: ./gradlew build
+        
+      - name: Run Gradle task
+        run: ./gradlew helloPublishing
+      
+      - name: Show Gradle publish task (Dry Run)
+        run: ./gradlew tasks --group publishing
+      
+      - name: Publish to GitHub Packages (Dry Run)
+        if: runner.os != 'Windows'  # Skip on Windows due to path issues in test
+        run: ./gradlew publishToMavenLocal
+        env:
+          USERNAME: ${{ github.actor }}
+          PASSWORD: ${{ github.token }}
+
+  custom-maven-settings:
+    name: Custom Maven Settings on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Set up JDK with custom settings path
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+          settings-path: ${{ github.workspace }}
+          
+      - name: Create Maven project structure
+        run: |
+          mkdir -p src/main/java/com/example/publishing
+          
+      - name: Create Java class
+        shell: bash
+        run: |
+          cat > src/main/java/com/example/publishing/HelloPublisher.java << 'EOF'
+          package com.example.publishing;
+          
+          public class HelloPublisher {
+              public String getMessage() {
+                  return "Hello from Custom Settings Publisher!";
+              }
+              
+              public static void main(String[] args) {
+                  System.out.println(new HelloPublisher().getMessage());
+                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:49:19");
+                  System.out.println("Current User's Login: mahabaleshwars");
+              }
+          }
+          EOF
+          
+      - name: Create pom.xml
+        shell: bash
+        run: |
+          cat > pom.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <project xmlns="http://maven.apache.org/POM/4.0.0"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+              <modelVersion>4.0.0</modelVersion>
+          
+              <groupId>com.example</groupId>
+              <artifactId>custom-settings-demo</artifactId>
+              <version>1.0.0-SNAPSHOT</version>
+              <packaging>jar</packaging>
+          
+              <name>Java Custom Settings Demo</name>
+              <description>Demo project for GitHub Actions Java custom settings</description>
+          
+              <properties>
+                  <java.version>11</java.version>
+                  <maven.compiler.source>${java.version}</maven.compiler.source>
+                  <maven.compiler.target>${java.version}</maven.compiler.target>
+                  <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+              </properties>
+          
+              <distributionManagement>
+                  <repository>
+                      <id>github</id>
+                      <name>GitHub Packages</name>
+                      <url>https://maven.pkg.github.com/${GITHUB_REPOSITORY}</url>
+                  </repository>
+              </distributionManagement>
+          </project>
+          EOF
+      
+      - name: Verify custom settings.xml
+        shell: bash
+        run: |
+          echo "Custom settings.xml location:"
+          cat ${{ github.workspace }}/settings.xml || echo "Custom settings.xml not found"
+      
+      - name: Build with Maven using custom settings
+        run: mvn -B package --file pom.xml -s ${{ github.workspace }}/settings.xml
+      
+      - name: Show effective POM with custom settings
+        run: mvn help:effective-pom -s ${{ github.workspace }}/settings.xml
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
