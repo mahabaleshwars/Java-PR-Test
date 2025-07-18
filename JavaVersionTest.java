@@ -4,11 +4,13 @@ public class JavaVersionTest {
             System.getProperty("java.vendor") + " " + 
             System.getProperty("java.version"));
         
-        // Print environment variables for JDK paths
-        System.out.println("JAVA_HOME_11_X64: " + System.getenv("JAVA_HOME_11_X64"));
-        System.out.println("JAVA_HOME_17_X64: " + System.getenv("JAVA_HOME_17_X64"));
-        System.out.println("JAVA_HOME_21_X64: " + System.getenv("JAVA_HOME_21_X64"));
-        System.out.println("Default JAVA_HOME: " + System.getenv("JAVA_HOME"));
+        // Print all environment variables with JAVA_HOME in their name
+        System.getenv().forEach((key, value) -> {
+            if (key.startsWith("JAVA_HOME")) {
+                System.out.println(key + ": " + value);
+            }
+        });
+        
         System.out.println("Current User's Login: mahabaleshwars");
     }
 }
