@@ -1,0 +1,279 @@
+name: Java Custom Installation Tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-java-package:
+    name: ${{ matrix.distribution }} JDK ${{ matrix.java-version }} (${{ matrix.package }}) on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        distribution: [temurin, zulu, liberica, corretto]
+        java-version: [11, 17]
+        package: [jdk, jre]
+        exclude:
+          # Exclude combinations that don't support JRE
+          - distribution: corretto
+            package: jre
+          # Add more exclusions if needed
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Java test file (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p java
+          echo 'public class HelloWorldApp { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("java.vm.name") + ")"); } }' > java/HelloWorldApp.java
+
+      - name: Create Java test file (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path java
+          @'
+          public class HelloWorldApp { 
+              public static void main(String[] args) { 
+                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("java.vm.name") + ")"); 
+              }
+          }
+          '@ | Out-File -FilePath java/HelloWorldApp.java -Encoding utf8
+
+      - name: Setup Java with custom package type
+        id: setup-java
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java-version }}
+          java-package: ${{ matrix.package }}
+
+      - name: Compile and run Java program
+        run: |
+          cd java
+          javac HelloWorldApp.java
+          java HelloWorldApp
+
+      - name: Report Java details
+        run: |
+          echo "Java Version: $(java -version 2>&1 | head -n 1)"
+          echo "Java Home: $JAVA_HOME"
+          echo "Java Package Type: ${{ matrix.package }}"
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:11:25"
+          echo "Current User's Login: mahabaleshwars"
+        shell: bash
+
+  test-java-architecture:
+    name: ${{ matrix.distribution }} JDK ${{ matrix.java-version }} (${{ matrix.architecture }}) on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]  # macOS doesn't support x86
+        distribution: [temurin, zulu, liberica, corretto]
+        java-version: [11, 17]
+        architecture: [x64, x86]
+        exclude:
+          # Not all distributions support x86
+          - distribution: corretto
+            architecture: x86
+          # macOS doesn't support x86 architecture
+          - os: macos-latest
+            architecture: x86
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Java test file (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p java
+          echo 'public class HelloWorldApp { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("sun.arch.data.model") + "-bit)"); } }' > java/HelloWorldApp.java
+
+      - name: Create Java test file (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path java
+          @'
+          public class HelloWorldApp { 
+              public static void main(String[] args) { 
+                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("sun.arch.data.model") + "-bit)"); 
+              }
+          }
+          '@ | Out-File -FilePath java/HelloWorldApp.java -Encoding utf8
+
+      - name: Setup Java with custom architecture
+        id: setup-java
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java-version }}
+          architecture: ${{ matrix.architecture }}
+
+      - name: Compile and run Java program
+        run: |
+          cd java
+          javac HelloWorldApp.java
+          java HelloWorldApp
+
+      - name: Report Java details
+        run: |
+          echo "Java Version: $(java -version 2>&1 | head -n 1)"
+          echo "Java Home: $JAVA_HOME"
+          echo "Architecture: ${{ matrix.architecture }}"
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:11:25"
+          echo "Current User's Login: mahabaleshwars"
+        shell: bash
+
+  test-jdkfile-installation:
+    name: JDKFile installation on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            download_url: "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.20.1%2B1/OpenJDK11U-jdk_x64_linux_hotspot_11.0.20.1_1.tar.gz"
+          - os: windows-latest
+            download_url: "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.20.1%2B1/OpenJDK11U-jdk_x64_windows_hotspot_11.0.20.1_1.zip"
+          - os: macos-latest
+            download_url: "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.20.1%2B1/OpenJDK11U-jdk_x64_mac_hotspot_11.0.20.1_1.tar.gz"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Java test file (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p java
+          echo 'public class HelloWorldApp { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")); } }' > java/HelloWorldApp.java
+
+      - name: Create Java test file (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path java
+          @'
+          public class HelloWorldApp { 
+              public static void main(String[] args) { 
+                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")); 
+              }
+          }
+          '@ | Out-File -FilePath java/HelloWorldApp.java -Encoding utf8
+
+      - name: Download JDK file (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          curl -L "${{ matrix.download_url }}" -o "${{ runner.temp }}/java_package.tar.gz"
+
+      - name: Download JDK file (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "${{ matrix.download_url }}" -OutFile "${{ runner.temp }}/java_package.zip"
+
+      - name: Setup Java from file (Linux/macOS)
+        if: runner.os != 'Windows'
+        id: setup-java-unix
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'jdkfile'
+          jdkFile: ${{ runner.temp }}/java_package.tar.gz
+          java-version: '11.0.20'
+          architecture: x64
+
+      - name: Setup Java from file (Windows)
+        if: runner.os == 'Windows'
+        id: setup-java-win
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'jdkfile'
+          jdkFile: ${{ runner.temp }}/java_package.zip
+          java-version: '11.0.20'
+          architecture: x64
+
+      - name: Compile and run Java program
+        run: |
+          cd java
+          javac HelloWorldApp.java
+          java HelloWorldApp
+
+      - name: Report Java details
+        run: |
+          echo "Java Version: $(java -version 2>&1 | head -n 1)"
+          echo "Java Home: $JAVA_HOME"
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:11:25"
+          echo "Current User's Login: mahabaleshwars"
+        shell: bash
+
+  test-jdk-fetch-latest:
+    name: Fetch latest JDK on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]  # Limited to Linux as an example
+        java-version: [17]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Java test file
+        run: |
+          mkdir -p java
+          echo 'public class HelloWorldApp { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")); } }' > java/HelloWorldApp.java
+
+      - name: Fetch latest temurin JDK
+        id: fetch_latest_jdk
+        run: |
+          major_version=${{ matrix.java-version }}
+          cd $RUNNER_TEMP
+          
+          # Get latest release for this major version
+          response=$(curl -s "https://api.github.com/repos/adoptium/temurin${major_version}-binaries/releases/latest")
+          
+          # Find Linux x64 asset
+          latest_jdk_download_url=$(echo "$response" | jq -r '.assets[] | select(.name | contains("jdk_x64_linux") and endswith(".tar.gz")) | .browser_download_url')
+          echo "Downloading from: $latest_jdk_download_url"
+          curl -Ls "$latest_jdk_download_url" -o java_package.tar.gz
+          
+          # Get version info
+          latest_jdk_json_url=$(echo "$response" | jq -r '.assets[] | select(.name | contains("jdk_x64_linux") and endswith(".tar.gz.json")) | .browser_download_url')
+          echo "Getting version info from: $latest_jdk_json_url"
+          latest_semver_version=$(curl -sL "$latest_jdk_json_url" | jq -r '.version.semver')
+          
+          echo "Found version: $latest_semver_version"
+          echo "java_version=$latest_semver_version" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Java from latest file
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'jdkfile'
+          jdkFile: ${{ runner.temp }}/java_package.tar.gz
+          java-version: ${{ steps.fetch_latest_jdk.outputs.java_version }}
+          architecture: x64
+
+      - name: Compile and run Java program
+        run: |
+          cd java
+          javac HelloWorldApp.java
+          java HelloWorldApp
+
+      - name: Report Java details
+        run: |
+          echo "Java Version: $(java -version 2>&1 | head -n 1)"
+          echo "Java Home: $JAVA_HOME"
+          echo "Detected Latest Version: ${{ steps.fetch_latest_jdk.outputs.java_version }}"
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:11:25"
+          echo "Current User's Login: mahabaleshwars"
+        shell: bash
