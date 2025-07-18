@@ -1,332 +1,299 @@
-name: Java Custom Installation Tests
+name: Java Setup with Check-Latest Flag
 
 on:
   workflow_dispatch:
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
-  test-java-package:
-    name: ${{ matrix.distribution }} JDK ${{ matrix.java-version }} (${{ matrix.package }}) on ${{ matrix.os }}
+  test-check-latest:
+    name: ${{ matrix.check-latest == 'true' && 'Latest' || 'Cached' }} ${{ matrix.distribution }} JDK ${{ matrix.java-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        distribution: [temurin, zulu, liberica, corretto]
-        java-version: [11, 17]
-        package: [jdk, jre]
+        distribution: [temurin, zulu, liberica, corretto, microsoft, semeru, oracle, sapmachine]
+        java-version: [11, 17, 21]
+        check-latest: [true, false]
         exclude:
-          # Exclude combinations that don't support JRE
-          - distribution: corretto
-            package: jre
+          # Oracle only supports JDK 17+
+          - distribution: oracle
+            java-version: 11
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Setup Java with custom package type
-        id: setup-java
-        uses: actions/setup-java@v4
-        with:
-          distribution: ${{ matrix.distribution }}
-          java-version: ${{ matrix.java-version }}
-          java-package: ${{ matrix.package }}
-
-      - name: Create Java test file (Unix)
-        if: runner.os != 'Windows'
-        run: |
-          mkdir -p java
-          cat > java/HelloWorldApp.java << EOF
-          public class HelloWorldApp {
-              public static void main(String[] args) {
-                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("java.vm.name") + ")");
-                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52");
-                  System.out.println("Current User's Login: mahabaleshwars");
-              }
-          }
-          EOF
-
-      - name: Create Java test file (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path java
-          @'
-          public class HelloWorldApp {
-              public static void main(String[] args) {
-                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("java.vm.name") + ")");
-                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52");
-                  System.out.println("Current User's Login: mahabaleshwars");
-              }
-          }
-          '@ | Out-File -FilePath java/HelloWorldApp.java -Encoding utf8
-
-      - name: Compile and run Java program
-        run: |
-          cd java
-          javac HelloWorldApp.java
-          java HelloWorldApp
-
-      - name: Report Java details
-        run: |
-          echo "Java Version: $(java -version 2>&1 | head -n 1)"
-          echo "Java Home: $JAVA_HOME"
-          echo "Java Package Type: ${{ matrix.package }}"
-          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52"
-          echo "Current User's Login: mahabaleshwars"
-        shell: bash
-
-  test-java-architecture:
-    name: ${{ matrix.distribution }} JDK ${{ matrix.java-version }} (${{ matrix.architecture }}) on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # Windows x86 & x64 - most reliable
-          - os: windows-latest
-            distribution: zulu
-            java-version: 11
-            architecture: x64
-          - os: windows-latest
-            distribution: zulu
-            java-version: 11
-            architecture: x86
-          - os: windows-latest
-            distribution: temurin
-            java-version: 11
-            architecture: x64
-          # Ubuntu x64 only
-          - os: ubuntu-latest
-            distribution: temurin
-            java-version: 11
-            architecture: x64
-          - os: ubuntu-latest
-            distribution: zulu
-            java-version: 11
-            architecture: x64
-          # MacOS x64 only
-          - os: macos-latest
-            distribution: temurin
-            java-version: 11
-            architecture: x64
-          - os: macos-latest
-            distribution: zulu
-            java-version: 11
-            architecture: x64
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # Install dependencies for x86 on Linux
-      - name: Install x86 dependencies
-        if: runner.os == 'Linux' && matrix.architecture == 'x86'
-        run: |
-          sudo dpkg --add-architecture i386
-          sudo apt-get update
-          sudo apt-get install -y zlib1g:i386 libstdc++6:i386
-
-      - name: Setup Java with custom architecture
-        id: setup-java
-        uses: actions/setup-java@v4
-        with:
-          distribution: ${{ matrix.distribution }}
-          java-version: ${{ matrix.java-version }}
-          architecture: ${{ matrix.architecture }}
-
-      - name: Create Java test file (Unix)
-        if: runner.os != 'Windows'
-        run: |
-          mkdir -p java
-          cat > java/HelloWorldApp.java << EOF
-          public class HelloWorldApp {
-              public static void main(String[] args) {
-                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("sun.arch.data.model") + "-bit)");
-                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52");
-                  System.out.println("Current User's Login: mahabaleshwars");
-              }
-          }
-          EOF
-
-      - name: Create Java test file (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path java
-          @'
-          public class HelloWorldApp {
-              public static void main(String[] args) {
-                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("sun.arch.data.model") + "-bit)");
-                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52");
-                  System.out.println("Current User's Login: mahabaleshwars");
-              }
-          }
-          '@ | Out-File -FilePath java/HelloWorldApp.java -Encoding utf8
-
-      - name: Compile and run Java program
-        run: |
-          cd java
-          javac HelloWorldApp.java
-          java HelloWorldApp
-
-      - name: Report Java details
-        run: |
-          echo "Java Version: $(java -version 2>&1 | head -n 1)"
-          echo "Java Home: $JAVA_HOME"
-          echo "Architecture: ${{ matrix.architecture }}"
-          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52"
-          echo "Current User's Login: mahabaleshwars"
-        shell: bash
-
-  test-jdkfile-installation:
-    name: JDKFile installation on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        include:
-          - os: ubuntu-latest
-            download_url: "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.20.1%2B1/OpenJDK11U-jdk_x64_linux_hotspot_11.0.20.1_1.tar.gz"
-          - os: windows-latest
-            download_url: "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.20.1%2B1/OpenJDK11U-jdk_x64_windows_hotspot_11.0.20.1_1.zip"
-          - os: macos-latest
-            download_url: "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.20.1%2B1/OpenJDK11U-jdk_x64_mac_hotspot_11.0.20.1_1.tar.gz"
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Download JDK file (Linux/macOS)
-        if: runner.os != 'Windows'
-        run: |
-          curl -L "${{ matrix.download_url }}" -o "${{ runner.temp }}/java_package.tar.gz"
-
-      - name: Download JDK file (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          Invoke-WebRequest -Uri "${{ matrix.download_url }}" -OutFile "${{ runner.temp }}/java_package.zip"
-
-      - name: Setup Java from file (Linux/macOS)
-        if: runner.os != 'Windows'
-        id: setup-java-unix
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'jdkfile'
-          jdkFile: ${{ runner.temp }}/java_package.tar.gz
-          java-version: '11.0.20'
-          architecture: x64
-
-      - name: Setup Java from file (Windows)
-        if: runner.os == 'Windows'
-        id: setup-java-win
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'jdkfile'
-          jdkFile: ${{ runner.temp }}/java_package.zip
-          java-version: '11.0.20'
-          architecture: x64
-
-      - name: Create Java test file (Unix)
-        if: runner.os != 'Windows'
-        run: |
-          mkdir -p java
-          cat > java/HelloWorldApp.java << EOF
-          public class HelloWorldApp {
-              public static void main(String[] args) {
-                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version"));
-                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52");
-                  System.out.println("Current User's Login: mahabaleshwars");
-              }
-          }
-          EOF
-
-      - name: Create Java test file (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path java
-          @'
-          public class HelloWorldApp {
-              public static void main(String[] args) {
-                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version"));
-                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52");
-                  System.out.println("Current User's Login: mahabaleshwars");
-              }
-          }
-          '@ | Out-File -FilePath java/HelloWorldApp.java -Encoding utf8
-
-      - name: Compile and run Java program
-        run: |
-          cd java
-          javac HelloWorldApp.java
-          java HelloWorldApp
-
-      - name: Report Java details
-        run: |
-          echo "Java Version: $(java -version 2>&1 | head -n 1)"
-          echo "Java Home: $JAVA_HOME"
-          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52"
-          echo "Current User's Login: mahabaleshwars"
-        shell: bash
-
-  test-jdk-fetch-latest:
-    name: Fetch latest JDK on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        java-version: [17]
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Fetch latest temurin JDK with explicit URL
-        run: |
-          # Use a known fixed URL instead of trying to parse the GitHub API
-          download_url="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.9%2B9/OpenJDK17U-jdk_x64_linux_hotspot_17.0.9_9.tar.gz"
-          echo "Downloading from: $download_url"
-          curl -Ls "$download_url" -o "${{ runner.temp }}/java_package.tar.gz"
-          echo "java_version=17.0.9" >> "$GITHUB_OUTPUT"
-        id: fetch_latest_jdk
-
-      - name: Setup Java from latest file
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'jdkfile'
-          jdkFile: ${{ runner.temp }}/java_package.tar.gz
-          java-version: ${{ steps.fetch_latest_jdk.outputs.java_version || '17.0.9' }}
-          architecture: x64
 
       - name: Create Java test file
         run: |
-          mkdir -p java
-          cat > java/HelloWorldApp.java << EOF
-          public class HelloWorldApp {
-              public static void main(String[] args) {
-                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version"));
-                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52");
-                  System.out.println("Current User's Login: mahabaleshwars");
-              }
-          }
-          EOF
+          echo 'public class HelloWorldApp { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")); } }' > HelloWorldApp.java
 
-      - name: Compile and run Java program
-        run: |
-          cd java
-          javac HelloWorldApp.java
-          java HelloWorldApp
+      - name: Setup Java with check-latest=${{ matrix.check-latest }}
+        id: setup-java
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java-version }}
+          check-latest: ${{ matrix.check-latest }}
+
+      - name: Run Java program
+        run: java HelloWorldApp.java
 
       - name: Report Java details
         run: |
           echo "Java Version: $(java -version 2>&1 | head -n 1)"
           echo "Java Home: $JAVA_HOME"
-          echo "Detected Latest Version: ${{ steps.fetch_latest_jdk.outputs.java_version || '17.0.9' }}"
-          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52"
-          echo "Current User's Login: mahabaleshwars"
+          echo "Check Latest: ${{ matrix.check-latest }}"
+          echo "Current Date (UTC): 2025-07-18 07:55:55"
+          echo "Current User: mahabaleshwars"
         shell: bash
+
+  test-specialized-distributions:
+    name: ${{ matrix.check-latest == 'true' && 'Latest' || 'Cached' }} ${{ matrix.distribution }} JDK ${{ matrix.java-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # GraalVM (only works on ubuntu-latest)
+          - os: ubuntu-latest
+            distribution: graalvm
+            java-version: 17
+            check-latest: true
+          - os: ubuntu-latest
+            distribution: graalvm
+            java-version: 17
+            check-latest: false
+          - os: ubuntu-latest
+            distribution: graalvm
+            java-version: 21
+            check-latest: true
+          - os: ubuntu-latest
+            distribution: graalvm
+            java-version: 21
+            check-latest: false
+            
+          # Dragonwell (doesn't work on macOS)
+          - os: ubuntu-latest
+            distribution: dragonwell
+            java-version: 11
+            check-latest: true
+          - os: ubuntu-latest
+            distribution: dragonwell
+            java-version: 11
+            check-latest: false
+          - os: ubuntu-latest
+            distribution: dragonwell
+            java-version: 17
+            check-latest: true
+          - os: ubuntu-latest
+            distribution: dragonwell
+            java-version: 17
+            check-latest: false
+          - os: windows-latest
+            distribution: dragonwell
+            java-version: 11
+            check-latest: true
+          - os: windows-latest
+            distribution: dragonwell
+            java-version: 17
+            check-latest: false
+            
+          # JetBrains (to avoid API rate limits, limited test)
+          - os: ubuntu-latest
+            distribution: jetbrains
+            java-version: 17
+            check-latest: true
+          - os: ubuntu-latest
+            distribution: jetbrains
+            java-version: 21
+            check-latest: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Java test file
+        run: |
+          echo 'public class HelloWorldApp { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")); } }' > HelloWorldApp.java
+
+      - name: Setup Java with check-latest=${{ matrix.check-latest }}
+        id: setup-java
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java-version }}
+          check-latest: ${{ matrix.check-latest }}
+
+      - name: Run Java program
+        run: java HelloWorldApp.java
+
+      - name: Report Java details
+        run: |
+          echo "Java Version: $(java -version 2>&1 | head -n 1)"
+          echo "Java Home: $JAVA_HOME"
+          echo "Check Latest: ${{ matrix.check-latest }}"
+          echo "Current Date (UTC): 2025-07-18 07:55:55"
+          echo "Current User: mahabaleshwars"
+        shell: bash
+
+  test-multiple-jdks:
+    name: Multiple JDKs on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        distribution: [temurin, zulu]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Java multi-version test file
+        run: |
+          cat > JavaVersionTest.java << 'EOF'
+          public class JavaVersionTest {
+              public static void main(String[] args) {
+                  System.out.println("Current Java: " + 
+                      System.getProperty("java.vendor") + " " + 
+                      System.getProperty("java.version"));
+                  
+                  // Print environment variables for JDK paths
+                  System.out.println("JAVA_HOME_11_X64: " + System.getenv("JAVA_HOME_11_X64"));
+                  System.out.println("JAVA_HOME_17_X64: " + System.getenv("JAVA_HOME_17_X64"));
+                  System.out.println("JAVA_HOME_21_X64: " + System.getenv("JAVA_HOME_21_X64"));
+                  System.out.println("Default JAVA_HOME: " + System.getenv("JAVA_HOME"));
+              }
+          }
+          EOF
+
+      - name: Setup multiple JDKs with check-latest=true
+        id: setup-java
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: |
+            11
+            17
+            21
+          check-latest: true
+
+      - name: Run Java program with multiple JDKs
+        run: java JavaVersionTest.java
+
+      - name: Test Java versions are available
+        shell: bash
+        run: |
+          # Test that we can use specific JDK versions by their environment variables
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            "$JAVA_HOME_11_X64/bin/java" -version
+            "$JAVA_HOME_17_X64/bin/java" -version
+            "$JAVA_HOME_21_X64/bin/java" -version
+          else 
+            $JAVA_HOME_11_X64/bin/java -version
+            $JAVA_HOME_17_X64/bin/java -version
+            $JAVA_HOME_21_X64/bin/java -version
+          fi
+
+  test-maven-toolchains:
+    name: Maven Toolchains on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Java with multiple versions
+        id: setup-java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: |
+            11
+            17
+            21
+          check-latest: true
+          
+      - name: Create Maven project with toolchains
+        run: |
+          mkdir -p src/main/java src/test/java
+          
+          # Create a main class that uses Java 11 features
+          cat > src/main/java/HelloWorld.java << 'EOF'
+          public class HelloWorld {
+              public static void main(String[] args) {
+                  var message = "Hello, World!"; // Java 11 var keyword
+                  System.out.println(message);
+              }
+          }
+          EOF
+          
+          # Create pom.xml with toolchains configuration
+          cat > pom.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <project xmlns="http://maven.apache.org/POM/4.0.0"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+              <modelVersion>4.0.0</modelVersion>
+          
+              <groupId>com.example</groupId>
+              <artifactId>toolchains-demo</artifactId>
+              <version>1.0.0</version>
+          
+              <properties>
+                  <maven.compiler.source>11</maven.compiler.source>
+                  <maven.compiler.target>11</maven.compiler.target>
+                  <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+              </properties>
+          
+              <build>
+                  <plugins>
+                      <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-toolchains-plugin</artifactId>
+                          <version>3.1.0</version>
+                          <executions>
+                              <execution>
+                                  <goals>
+                                      <goal>toolchain</goal>
+                                  </goals>
+                              </execution>
+                          </executions>
+                          <configuration>
+                              <toolchains>
+                                  <jdk>
+                                      <version>11</version>
+                                  </jdk>
+                              </toolchains>
+                          </configuration>
+                      </plugin>
+                      <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.11.0</version>
+                          <configuration>
+                              <release>11</release>
+                          </configuration>
+                      </plugin>
+                  </plugins>
+              </build>
+          </project>
+          EOF
+        shell: bash
+      
+      - name: Show toolchains file
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cat "$HOME/.m2/toolchains.xml"
+          else
+            cat $HOME/.m2/toolchains.xml
+          fi
+        shell: bash
+      
+      - name: Build with Maven toolchains
+        run: mvn -B clean package
