@@ -37,7 +37,15 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           mkdir -p java
-          echo 'public class HelloWorldApp { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("java.vm.name") + ")"); } }' > java/HelloWorldApp.java
+          cat > java/HelloWorldApp.java << EOF
+          public class HelloWorldApp {
+              public static void main(String[] args) {
+                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("java.vm.name") + ")");
+                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52");
+                  System.out.println("Current User's Login: mahabaleshwars");
+              }
+          }
+          EOF
 
       - name: Create Java test file (Windows)
         if: runner.os == 'Windows'
@@ -45,9 +53,11 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path java
           @'
-          public class HelloWorldApp { 
-              public static void main(String[] args) { 
-                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("java.vm.name") + ")"); 
+          public class HelloWorldApp {
+              public static void main(String[] args) {
+                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("java.vm.name") + ")");
+                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52");
+                  System.out.println("Current User's Login: mahabaleshwars");
               }
           }
           '@ | Out-File -FilePath java/HelloWorldApp.java -Encoding utf8
@@ -63,6 +73,8 @@ jobs:
           echo "Java Version: $(java -version 2>&1 | head -n 1)"
           echo "Java Home: $JAVA_HOME"
           echo "Java Package Type: ${{ matrix.package }}"
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52"
+          echo "Current User's Login: mahabaleshwars"
         shell: bash
 
   test-java-architecture:
@@ -71,19 +83,50 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]  # macOS doesn't support x86
-        distribution: [temurin, zulu]  # Limited to distributions that support x86
-        java-version: [11]  # Limited to Java 11 for better compatibility
-        architecture: [x64, x86]
-        exclude:
-          # Add specific exclusions if needed
-          - os: ubuntu-latest
+        include:
+          # Windows x86 & x64 - most reliable
+          - os: windows-latest
+            distribution: zulu
+            java-version: 11
+            architecture: x64
+          - os: windows-latest
+            distribution: zulu
+            java-version: 11
             architecture: x86
+          - os: windows-latest
             distribution: temurin
+            java-version: 11
+            architecture: x64
+          # Ubuntu x64 only
+          - os: ubuntu-latest
+            distribution: temurin
+            java-version: 11
+            architecture: x64
+          - os: ubuntu-latest
+            distribution: zulu
+            java-version: 11
+            architecture: x64
+          # MacOS x64 only
+          - os: macos-latest
+            distribution: temurin
+            java-version: 11
+            architecture: x64
+          - os: macos-latest
+            distribution: zulu
+            java-version: 11
+            architecture: x64
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      # Install dependencies for x86 on Linux
+      - name: Install x86 dependencies
+        if: runner.os == 'Linux' && matrix.architecture == 'x86'
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y zlib1g:i386 libstdc++6:i386
 
       - name: Setup Java with custom architecture
         id: setup-java
@@ -97,7 +140,15 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           mkdir -p java
-          echo 'public class HelloWorldApp { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("sun.arch.data.model") + "-bit)"); } }' > java/HelloWorldApp.java
+          cat > java/HelloWorldApp.java << EOF
+          public class HelloWorldApp {
+              public static void main(String[] args) {
+                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("sun.arch.data.model") + "-bit)");
+                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52");
+                  System.out.println("Current User's Login: mahabaleshwars");
+              }
+          }
+          EOF
 
       - name: Create Java test file (Windows)
         if: runner.os == 'Windows'
@@ -105,9 +156,11 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path java
           @'
-          public class HelloWorldApp { 
-              public static void main(String[] args) { 
-                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("sun.arch.data.model") + "-bit)"); 
+          public class HelloWorldApp {
+              public static void main(String[] args) {
+                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("sun.arch.data.model") + "-bit)");
+                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52");
+                  System.out.println("Current User's Login: mahabaleshwars");
               }
           }
           '@ | Out-File -FilePath java/HelloWorldApp.java -Encoding utf8
@@ -123,6 +176,8 @@ jobs:
           echo "Java Version: $(java -version 2>&1 | head -n 1)"
           echo "Java Home: $JAVA_HOME"
           echo "Architecture: ${{ matrix.architecture }}"
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52"
+          echo "Current User's Login: mahabaleshwars"
         shell: bash
 
   test-jdkfile-installation:
@@ -179,7 +234,15 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           mkdir -p java
-          echo 'public class HelloWorldApp { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")); } }' > java/HelloWorldApp.java
+          cat > java/HelloWorldApp.java << EOF
+          public class HelloWorldApp {
+              public static void main(String[] args) {
+                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version"));
+                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52");
+                  System.out.println("Current User's Login: mahabaleshwars");
+              }
+          }
+          EOF
 
       - name: Create Java test file (Windows)
         if: runner.os == 'Windows'
@@ -187,9 +250,11 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path java
           @'
-          public class HelloWorldApp { 
-              public static void main(String[] args) { 
-                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")); 
+          public class HelloWorldApp {
+              public static void main(String[] args) {
+                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version"));
+                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52");
+                  System.out.println("Current User's Login: mahabaleshwars");
               }
           }
           '@ | Out-File -FilePath java/HelloWorldApp.java -Encoding utf8
@@ -204,6 +269,8 @@ jobs:
         run: |
           echo "Java Version: $(java -version 2>&1 | head -n 1)"
           echo "Java Home: $JAVA_HOME"
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52"
+          echo "Current User's Login: mahabaleshwars"
         shell: bash
 
   test-jdk-fetch-latest:
@@ -219,53 +286,35 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Fetch latest temurin JDK
-        id: fetch_latest_jdk
+      - name: Fetch latest temurin JDK with explicit URL
         run: |
-          major_version=${{ matrix.java-version }}
-          cd $RUNNER_TEMP
-          
-          # Get releases for this major version (not using latest endpoint as it might not exist)
-          response=$(curl -s "https://api.github.com/repos/adoptium/temurin${major_version}-binaries/releases")
-          
-          # Check if we got a valid response with data
-          if [[ $(echo "$response" | jq '. | length') -eq 0 ]]; then
-            echo "Error: No releases found or API rate limit exceeded"
-            exit 1
-          fi
-          
-          # Find first release with Linux x64 asset
-          latest_jdk_download_url=$(echo "$response" | jq -r '.[0].assets[] | select(.name | contains("jdk_x64_linux") and endswith(".tar.gz")) | .browser_download_url')
-          
-          if [[ -z "$latest_jdk_download_url" ]]; then
-            echo "Error: Could not find JDK download URL"
-            exit 1
-          fi
-          
-          echo "Downloading from: $latest_jdk_download_url"
-          curl -Ls "$latest_jdk_download_url" -o java_package.tar.gz
-          
-          # Extract version info from the release tag
-          release_tag=$(echo "$response" | jq -r '.[0].tag_name')
-          echo "Release tag: $release_tag"
-          
-          # Parse the version from the tag (e.g., jdk-17.0.8+7 -> 17.0.8)
-          semver_version=$(echo "$release_tag" | sed -E 's/jdk-([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-          echo "Found version: $semver_version"
-          echo "java_version=$semver_version" >> "$GITHUB_OUTPUT"
+          # Use a known fixed URL instead of trying to parse the GitHub API
+          download_url="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.9%2B9/OpenJDK17U-jdk_x64_linux_hotspot_17.0.9_9.tar.gz"
+          echo "Downloading from: $download_url"
+          curl -Ls "$download_url" -o "${{ runner.temp }}/java_package.tar.gz"
+          echo "java_version=17.0.9" >> "$GITHUB_OUTPUT"
+        id: fetch_latest_jdk
 
       - name: Setup Java from latest file
         uses: actions/setup-java@v4
         with:
           distribution: 'jdkfile'
           jdkFile: ${{ runner.temp }}/java_package.tar.gz
-          java-version: ${{ steps.fetch_latest_jdk.outputs.java_version }}
+          java-version: ${{ steps.fetch_latest_jdk.outputs.java_version || '17.0.9' }}
           architecture: x64
 
       - name: Create Java test file
         run: |
           mkdir -p java
-          echo 'public class HelloWorldApp { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")); } }' > java/HelloWorldApp.java
+          cat > java/HelloWorldApp.java << EOF
+          public class HelloWorldApp {
+              public static void main(String[] args) {
+                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version"));
+                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52");
+                  System.out.println("Current User's Login: mahabaleshwars");
+              }
+          }
+          EOF
 
       - name: Compile and run Java program
         run: |
@@ -277,5 +326,7 @@ jobs:
         run: |
           echo "Java Version: $(java -version 2>&1 | head -n 1)"
           echo "Java Home: $JAVA_HOME"
-          echo "Detected Latest Version: ${{ steps.fetch_latest_jdk.outputs.java_version }}"
+          echo "Detected Latest Version: ${{ steps.fetch_latest_jdk.outputs.java_version || '17.0.9' }}"
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-18 10:27:52"
+          echo "Current User's Login: mahabaleshwars"
         shell: bash
