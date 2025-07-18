@@ -30,7 +30,7 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           mkdir -p java
-          echo 'public class HelloWorldApp { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("java.vm.name") + ")"); } }' > java/HelloWorldApp.java
+          echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("java.vm.name") + ")"); } }' > java/HelloWorld.java
 
       - name: Create Java test file (Windows)
         if: runner.os == 'Windows'
@@ -38,12 +38,12 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path java
           @'
-          public class HelloWorldApp { 
+          public class HelloWorld { 
               public static void main(String[] args) { 
                   System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("java.vm.name") + ")"); 
               }
           }
-          '@ | Out-File -FilePath java/HelloWorldApp.java -Encoding utf8
+          '@ | Out-File -FilePath java/HelloWorld.java -Encoding utf8
 
       - name: Setup Java with custom package type
         id: setup-java
@@ -56,8 +56,8 @@ jobs:
       - name: Compile and run Java program
         run: |
           cd java
-          javac HelloWorldApp.java
-          java HelloWorldApp
+          javac HelloWorld.java
+          java HelloWorld
 
       - name: Report Java details
         run: |
@@ -94,7 +94,7 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           mkdir -p java
-          echo 'public class HelloWorldApp { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("sun.arch.data.model") + "-bit)"); } }' > java/HelloWorldApp.java
+          echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("sun.arch.data.model") + "-bit)"); } }' > java/HelloWorld.java
 
       - name: Create Java test file (Windows)
         if: runner.os == 'Windows'
@@ -102,12 +102,12 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path java
           @'
-          public class HelloWorldApp { 
+          public class HelloWorld { 
               public static void main(String[] args) { 
                   System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version") + " (" + System.getProperty("sun.arch.data.model") + "-bit)"); 
               }
           }
-          '@ | Out-File -FilePath java/HelloWorldApp.java -Encoding utf8
+          '@ | Out-File -FilePath java/HelloWorld.java -Encoding utf8
 
       - name: Setup Java with custom architecture
         id: setup-java
@@ -120,8 +120,8 @@ jobs:
       - name: Compile and run Java program
         run: |
           cd java
-          javac HelloWorldApp.java
-          java HelloWorldApp
+          javac HelloWorld.java
+          java HelloWorld
 
       - name: Report Java details
         run: |
@@ -155,7 +155,7 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           mkdir -p java
-          echo 'public class HelloWorldApp { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")); } }' > java/HelloWorldApp.java
+          echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")); } }' > java/HelloWorld.java
 
       - name: Create Java test file (Windows)
         if: runner.os == 'Windows'
@@ -163,12 +163,12 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path java
           @'
-          public class HelloWorldApp { 
+          public class HelloWorld { 
               public static void main(String[] args) { 
                   System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")); 
               }
           }
-          '@ | Out-File -FilePath java/HelloWorldApp.java -Encoding utf8
+          '@ | Out-File -FilePath java/HelloWorld.java -Encoding utf8
 
       - name: Download JDK file (Linux/macOS)
         if: runner.os != 'Windows'
@@ -204,8 +204,8 @@ jobs:
       - name: Compile and run Java program
         run: |
           cd java
-          javac HelloWorldApp.java
-          java HelloWorldApp
+          javac HelloWorld.java
+          java HelloWorld
 
       - name: Report Java details
         run: |
@@ -231,7 +231,7 @@ jobs:
       - name: Create Java test file
         run: |
           mkdir -p java
-          echo 'public class HelloWorldApp { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")); } }' > java/HelloWorldApp.java
+          echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")); } }' > java/HelloWorld.java
 
       - name: Fetch latest temurin JDK
         id: fetch_latest_jdk
@@ -266,8 +266,8 @@ jobs:
       - name: Compile and run Java program
         run: |
           cd java
-          javac HelloWorldApp.java
-          java HelloWorldApp
+          javac HelloWorld.java
+          java HelloWorld
 
       - name: Report Java details
         run: |
