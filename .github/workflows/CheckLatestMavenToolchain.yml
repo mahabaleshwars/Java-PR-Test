@@ -1,4 +1,4 @@
-name: Java Setup with Check-Latest Flag, Multiple JDK and Maven Toolchain
+name: Java Setup with Check-Latest Flag
 
 on:
   workflow_dispatch:
@@ -25,9 +25,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create Java test file
+      - name: Create Java test file (Unix)
+        if: runner.os != 'Windows'
         run: |
-          echo 'public class HelloWorldApp { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")); } }' > HelloWorldApp.java
+          echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")); } }' > HelloWorld.java
+
+      - name: Create Java test file (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          @'
+          public class HelloWorld { 
+              public static void main(String[] args) { 
+                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")); 
+              }
+          }
+          '@ | Out-File -FilePath HelloWorld.java -Encoding utf8
 
       - name: Setup Java with check-latest=${{ matrix.check-latest }}
         id: setup-java
@@ -38,8 +51,16 @@ jobs:
           check-latest: ${{ matrix.check-latest }}
 
       - name: Run Java program
-        run: java HelloWorldApp.java
+        run: java HelloWorld.java
 
+      - name: Report Java details
+        run: |
+          echo "Java Version: $(java -version 2>&1 | head -n 1)"
+          echo "Java Home: $JAVA_HOME"
+          echo "Check Latest: ${{ matrix.check-latest }}"
+          echo "Current Date and Time (UTC): 2025-07-18 08:14:02"
+          echo "Current User's Login: mahabaleshwars"
+        shell: bash
 
   test-specialized-distributions:
     name: ${{ matrix.check-latest == 'true' && 'Latest' || 'Cached' }} ${{ matrix.distribution }} JDK ${{ matrix.java-version }} on ${{ matrix.os }}
@@ -51,11 +72,11 @@ jobs:
           # GraalVM (only works on ubuntu-latest)
           - os: ubuntu-latest
             distribution: graalvm
-            java-version: 17
+            java-version: '17.0.12'
             check-latest: true
           - os: ubuntu-latest
             distribution: graalvm
-            java-version: 17
+            java-version: '17.0.12'
             check-latest: false
           - os: ubuntu-latest
             distribution: graalvm
@@ -106,6 +127,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Create Java test file (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          echo 'public class HelloWorld { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")); } }' > HelloWorld.java
+
+      - name: Create Java test file (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          @'
+          public class HelloWorld { 
+              public static void main(String[] args) { 
+                  System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")); 
+              }
+          }
+          '@ | Out-File -FilePath HelloWorld.java -Encoding utf8
+
       - name: Setup Java with check-latest=${{ matrix.check-latest }}
         id: setup-java
         uses: actions/setup-java@v4
@@ -115,8 +153,16 @@ jobs:
           check-latest: ${{ matrix.check-latest }}
 
       - name: Run Java program
-        run: java HelloWorldApp.java
+        run: java HelloWorld.java
 
+      - name: Report Java details
+        run: |
+          echo "Java Version: $(java -version 2>&1 | head -n 1)"
+          echo "Java Home: $JAVA_HOME"
+          echo "Check Latest: ${{ matrix.check-latest }}"
+          echo "Current Date and Time (UTC): 2025-07-18 08:14:02"
+          echo "Current User's Login: mahabaleshwars"
+        shell: bash
 
   test-multiple-jdks:
     name: Multiple JDKs on ${{ matrix.os }}
@@ -131,9 +177,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create Java multi-version test file
+      - name: Create Java test file (Unix)
+        if: runner.os != 'Windows'
         run: |
-          cat > JavaVersionTest.java << 'EOF'
+          cat > JavaVersionTest.java << EOF
           public class JavaVersionTest {
               public static void main(String[] args) {
                   System.out.println("Current Java: " + 
@@ -149,6 +196,26 @@ jobs:
           }
           EOF
 
+      - name: Create Java test file (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          @'
+          public class JavaVersionTest {
+              public static void main(String[] args) {
+                  System.out.println("Current Java: " + 
+                      System.getProperty("java.vendor") + " " + 
+                      System.getProperty("java.version"));
+                  
+                  // Print environment variables for JDK paths
+                  System.out.println("JAVA_HOME_11_X64: " + System.getenv("JAVA_HOME_11_X64"));
+                  System.out.println("JAVA_HOME_17_X64: " + System.getenv("JAVA_HOME_17_X64"));
+                  System.out.println("JAVA_HOME_21_X64: " + System.getenv("JAVA_HOME_21_X64"));
+                  System.out.println("Default JAVA_HOME: " + System.getenv("JAVA_HOME"));
+              }
+          }
+          '@ | Out-File -FilePath JavaVersionTest.java -Encoding utf8
+
       - name: Setup multiple JDKs with check-latest=true
         id: setup-java
         uses: actions/setup-java@v4
@@ -163,19 +230,27 @@ jobs:
       - name: Run Java program with multiple JDKs
         run: java JavaVersionTest.java
 
-      - name: Test Java versions are available
+      - name: Test Java versions are available (Linux/macOS)
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           # Test that we can use specific JDK versions by their environment variables
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            "$JAVA_HOME_11_X64/bin/java" -version
-            "$JAVA_HOME_17_X64/bin/java" -version
-            "$JAVA_HOME_21_X64/bin/java" -version
-          else 
-            $JAVA_HOME_11_X64/bin/java -version
-            $JAVA_HOME_17_X64/bin/java -version
-            $JAVA_HOME_21_X64/bin/java -version
-          fi
+          $JAVA_HOME_11_X64/bin/java -version
+          $JAVA_HOME_17_X64/bin/java -version
+          $JAVA_HOME_21_X64/bin/java -version
+          echo "Current Date and Time (UTC): 2025-07-18 08:14:02"
+          echo "Current User's Login: mahabaleshwars"
+
+      - name: Test Java versions are available (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # Test that we can use specific JDK versions by their environment variables
+          & "$env:JAVA_HOME_11_X64\bin\java" -version
+          & "$env:JAVA_HOME_17_X64\bin\java" -version
+          & "$env:JAVA_HOME_21_X64\bin\java" -version
+          echo "Current Date and Time (UTC): 2025-07-18 08:14:02"
+          echo "Current User's Login: mahabaleshwars"
 
   test-maven-toolchains:
     name: Maven Toolchains on ${{ matrix.os }}
@@ -199,12 +274,13 @@ jobs:
             21
           check-latest: true
           
-      - name: Create Maven project with toolchains
+      - name: Create Maven project with toolchains (Unix)
+        if: runner.os != 'Windows'
         run: |
           mkdir -p src/main/java src/test/java
           
           # Create a main class that uses Java 11 features
-          cat > src/main/java/HelloWorld.java << 'EOF'
+          cat > src/main/java/HelloWorld.java << EOF
           public class HelloWorld {
               public static void main(String[] args) {
                   var message = "Hello, World!"; // Java 11 var keyword
@@ -214,7 +290,7 @@ jobs:
           EOF
           
           # Create pom.xml with toolchains configuration
-          cat > pom.xml << 'EOF'
+          cat > pom.xml << EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <project xmlns="http://maven.apache.org/POM/4.0.0"
                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -264,16 +340,88 @@ jobs:
               </build>
           </project>
           EOF
+
+      - name: Create Maven project with toolchains (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path src/main/java,src/test/java -Force
+          
+          # Create a main class that uses Java 11 features
+          @'
+          public class HelloWorld {
+              public static void main(String[] args) {
+                  var message = "Hello, World!"; // Java 11 var keyword
+                  System.out.println(message);
+              }
+          }
+          '@ | Out-File -FilePath src/main/java/HelloWorld.java -Encoding utf8
+          
+          # Create pom.xml with toolchains configuration
+          @'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <project xmlns="http://maven.apache.org/POM/4.0.0"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+              <modelVersion>4.0.0</modelVersion>
+          
+              <groupId>com.example</groupId>
+              <artifactId>toolchains-demo</artifactId>
+              <version>1.0.0</version>
+          
+              <properties>
+                  <maven.compiler.source>11</maven.compiler.source>
+                  <maven.compiler.target>11</maven.compiler.target>
+                  <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+              </properties>
+          
+              <build>
+                  <plugins>
+                      <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-toolchains-plugin</artifactId>
+                          <version>3.1.0</version>
+                          <executions>
+                              <execution>
+                                  <goals>
+                                      <goal>toolchain</goal>
+                                  </goals>
+                              </execution>
+                          </executions>
+                          <configuration>
+                              <toolchains>
+                                  <jdk>
+                                      <version>11</version>
+                                  </jdk>
+                              </toolchains>
+                          </configuration>
+                      </plugin>
+                      <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.11.0</version>
+                          <configuration>
+                              <release>11</release>
+                          </configuration>
+                      </plugin>
+                  </plugins>
+              </build>
+          </project>
+          '@ | Out-File -FilePath pom.xml -Encoding utf8
+      
+      - name: Show toolchains file (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cat $HOME/.m2/toolchains.xml
+          echo "Current User's Login: mahabaleshwars"
         shell: bash
       
-      - name: Show toolchains file
+      - name: Show toolchains file (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
         run: |
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            cat "$HOME/.m2/toolchains.xml"
-          else
-            cat $HOME/.m2/toolchains.xml
-          fi
-        shell: bash
+          Get-Content $env:USERPROFILE\.m2\toolchains.xml
+          echo "Current User's Login: mahabaleshwars"
       
       - name: Build with Maven toolchains
         run: mvn -B clean package
