@@ -1,0 +1,279 @@
+name: Java Setup with Check-Latest Flag, Multiple JDK and Maven Toolchain
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-check-latest:
+    name: ${{ matrix.check-latest == 'true' && 'Latest' || 'Cached' }} ${{ matrix.distribution }} JDK ${{ matrix.java-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        distribution: [temurin, zulu, liberica, corretto, microsoft, semeru, oracle, sapmachine]
+        java-version: [11, 17, 21]
+        check-latest: [true, false]
+        exclude:
+          # Oracle only supports JDK 17+
+          - distribution: oracle
+            java-version: 11
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Java test file
+        run: |
+          echo 'public class HelloWorldApp { public static void main(String[] args) { System.out.println("Hello from " + System.getProperty("java.vendor") + " " + System.getProperty("java.version")); } }' > HelloWorldApp.java
+
+      - name: Setup Java with check-latest=${{ matrix.check-latest }}
+        id: setup-java
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java-version }}
+          check-latest: ${{ matrix.check-latest }}
+
+      - name: Run Java program
+        run: java HelloWorldApp.java
+
+
+  test-specialized-distributions:
+    name: ${{ matrix.check-latest == 'true' && 'Latest' || 'Cached' }} ${{ matrix.distribution }} JDK ${{ matrix.java-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # GraalVM (only works on ubuntu-latest)
+          - os: ubuntu-latest
+            distribution: graalvm
+            java-version: 17
+            check-latest: true
+          - os: ubuntu-latest
+            distribution: graalvm
+            java-version: 17
+            check-latest: false
+          - os: ubuntu-latest
+            distribution: graalvm
+            java-version: 21
+            check-latest: true
+          - os: ubuntu-latest
+            distribution: graalvm
+            java-version: 21
+            check-latest: false
+            
+          # Dragonwell (doesn't work on macOS)
+          - os: ubuntu-latest
+            distribution: dragonwell
+            java-version: 11
+            check-latest: true
+          - os: ubuntu-latest
+            distribution: dragonwell
+            java-version: 11
+            check-latest: false
+          - os: ubuntu-latest
+            distribution: dragonwell
+            java-version: 17
+            check-latest: true
+          - os: ubuntu-latest
+            distribution: dragonwell
+            java-version: 17
+            check-latest: false
+          - os: windows-latest
+            distribution: dragonwell
+            java-version: 11
+            check-latest: true
+          - os: windows-latest
+            distribution: dragonwell
+            java-version: 17
+            check-latest: false
+            
+          # JetBrains (to avoid API rate limits, limited test)
+          - os: ubuntu-latest
+            distribution: jetbrains
+            java-version: 17
+            check-latest: true
+          - os: ubuntu-latest
+            distribution: jetbrains
+            java-version: 21
+            check-latest: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java with check-latest=${{ matrix.check-latest }}
+        id: setup-java
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java-version }}
+          check-latest: ${{ matrix.check-latest }}
+
+      - name: Run Java program
+        run: java HelloWorldApp.java
+
+
+  test-multiple-jdks:
+    name: Multiple JDKs on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        distribution: [temurin, zulu]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Java multi-version test file
+        run: |
+          cat > JavaVersionTest.java << 'EOF'
+          public class JavaVersionTest {
+              public static void main(String[] args) {
+                  System.out.println("Current Java: " + 
+                      System.getProperty("java.vendor") + " " + 
+                      System.getProperty("java.version"));
+                  
+                  // Print environment variables for JDK paths
+                  System.out.println("JAVA_HOME_11_X64: " + System.getenv("JAVA_HOME_11_X64"));
+                  System.out.println("JAVA_HOME_17_X64: " + System.getenv("JAVA_HOME_17_X64"));
+                  System.out.println("JAVA_HOME_21_X64: " + System.getenv("JAVA_HOME_21_X64"));
+                  System.out.println("Default JAVA_HOME: " + System.getenv("JAVA_HOME"));
+              }
+          }
+          EOF
+
+      - name: Setup multiple JDKs with check-latest=true
+        id: setup-java
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: |
+            11
+            17
+            21
+          check-latest: true
+
+      - name: Run Java program with multiple JDKs
+        run: java JavaVersionTest.java
+
+      - name: Test Java versions are available
+        shell: bash
+        run: |
+          # Test that we can use specific JDK versions by their environment variables
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            "$JAVA_HOME_11_X64/bin/java" -version
+            "$JAVA_HOME_17_X64/bin/java" -version
+            "$JAVA_HOME_21_X64/bin/java" -version
+          else 
+            $JAVA_HOME_11_X64/bin/java -version
+            $JAVA_HOME_17_X64/bin/java -version
+            $JAVA_HOME_21_X64/bin/java -version
+          fi
+
+  test-maven-toolchains:
+    name: Maven Toolchains on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Java with multiple versions
+        id: setup-java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: |
+            11
+            17
+            21
+          check-latest: true
+          
+      - name: Create Maven project with toolchains
+        run: |
+          mkdir -p src/main/java src/test/java
+          
+          # Create a main class that uses Java 11 features
+          cat > src/main/java/HelloWorld.java << 'EOF'
+          public class HelloWorld {
+              public static void main(String[] args) {
+                  var message = "Hello, World!"; // Java 11 var keyword
+                  System.out.println(message);
+              }
+          }
+          EOF
+          
+          # Create pom.xml with toolchains configuration
+          cat > pom.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <project xmlns="http://maven.apache.org/POM/4.0.0"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+              <modelVersion>4.0.0</modelVersion>
+          
+              <groupId>com.example</groupId>
+              <artifactId>toolchains-demo</artifactId>
+              <version>1.0.0</version>
+          
+              <properties>
+                  <maven.compiler.source>11</maven.compiler.source>
+                  <maven.compiler.target>11</maven.compiler.target>
+                  <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+              </properties>
+          
+              <build>
+                  <plugins>
+                      <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-toolchains-plugin</artifactId>
+                          <version>3.1.0</version>
+                          <executions>
+                              <execution>
+                                  <goals>
+                                      <goal>toolchain</goal>
+                                  </goals>
+                              </execution>
+                          </executions>
+                          <configuration>
+                              <toolchains>
+                                  <jdk>
+                                      <version>11</version>
+                                  </jdk>
+                              </toolchains>
+                          </configuration>
+                      </plugin>
+                      <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.11.0</version>
+                          <configuration>
+                              <release>11</release>
+                          </configuration>
+                      </plugin>
+                  </plugins>
+              </build>
+          </project>
+          EOF
+        shell: bash
+      
+      - name: Show toolchains file
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cat "$HOME/.m2/toolchains.xml"
+          else
+            cat $HOME/.m2/toolchains.xml
+          fi
+        shell: bash
+      
+      - name: Build with Maven toolchains
+        run: mvn -B clean package
