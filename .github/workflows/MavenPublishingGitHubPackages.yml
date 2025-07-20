@@ -1,0 +1,43 @@
+name: Maven Publishing to GitHub Packages
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'pom.xml'
+      - 'src/**'
+
+jobs:
+  publish-to-github:
+    name: Publish to GitHub Packages with ${{ matrix.distribution }} JDK ${{ matrix.java-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        distribution: [temurin, zulu, liberica]
+        java-version: [11, 17]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java-version }}
+          server-id: github
+      
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
+      
+      - name: Publish to GitHub Packages
+        run: mvn deploy
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      
+      - name: Report status
+        run: |
+          echo "Successfully published to GitHub Packages with ${{ matrix.distribution }} JDK ${{ matrix.java-version }}"
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 10:25:51"
+          echo "Current User's Login: mahabaleshwars"
