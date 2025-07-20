@@ -1,0 +1,50 @@
+name: Maven with Custom Settings Path
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-with-custom-settings:
+    name: Build with custom settings on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        distribution: [temurin]
+        java-version: [11]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK with custom settings path
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java-version }}
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+          settings-path: ${{ github.workspace }}
+      
+      - name: Show custom settings location
+        shell: bash
+        run: |
+          echo "Settings.xml location: ${{ github.workspace }}/settings.xml"
+          cat ${{ github.workspace }}/settings.xml
+      
+      - name: Build with Maven using custom settings
+        run: mvn -B package --file pom.xml -s ${{ github.workspace }}/settings.xml
+      
+      - name: Publish to GitHub Packages (Dry Run)
+        run: mvn help:effective-pom -s ${{ github.workspace }}/settings.xml
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      
+      - name: Report status
+        run: |
+          echo "Successfully used custom settings path"
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 10:25:51"
+          echo "Current User's Login: mahabaleshwars"
