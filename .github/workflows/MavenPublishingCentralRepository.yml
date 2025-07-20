@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        distribution: [temurin]
-        java-version: [11]
+        distribution: [adopt, corretto, dragonwell, sapmachine, graalvm, jetbrains, temurin, zulu, liberica, semeru]
+        java-version: [21]
     
     steps:
       - name: Checkout code
