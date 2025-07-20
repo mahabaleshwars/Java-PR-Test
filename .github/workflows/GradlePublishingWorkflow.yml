@@ -1,0 +1,53 @@
+name: Gradle Publishing Workflow
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'build.gradle'
+      - 'src/**'
+
+jobs:
+  publish-with-gradle:
+    name: Publish with Gradle on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        distribution: [temurin, zulu]
+        java-version: [11, 17]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java-version }}
+      
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: wrapper
+      
+      - name: Make gradlew executable
+        if: runner.os != 'Windows'
+        run: chmod +x ./gradlew
+      
+      - name: Build with Gradle
+        run: ./gradlew build
+      
+      - name: Publish to GitHub Packages
+        run: ./gradlew publish
+        env:
+          USERNAME: ${{ github.actor }}
+          PASSWORD: ${{ github.token }}
+      
+      - name: Report status
+        run: |
+          echo "Successfully published with Gradle"
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 10:25:51"
+          echo "Current User's Login: mahabaleshwars"
