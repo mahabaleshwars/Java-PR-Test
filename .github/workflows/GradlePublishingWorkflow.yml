@@ -13,6 +13,7 @@ jobs:
     name: Publish with Gradle on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         distribution: [temurin, zulu]
@@ -29,12 +30,13 @@ jobs:
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
+          cache: gradle
       
-      # Create Gradle wrapper explicitly
-      - name: Create Gradle Wrapper
+      # Create Gradle wrapper and project files
+      - name: Create Gradle Project
         shell: bash
         run: |
-          mkdir -p gradle/wrapper
+          mkdir -p gradle/wrapper src/main/java/com/example/demo
           curl -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/master/gradle/wrapper/gradle-wrapper.jar
           
           cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
@@ -57,48 +59,166 @@ jobs:
           java -classpath gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain %*
           EOF
           
-          # Explicitly set permissions on all platforms
           chmod +x gradlew
-
+          
+          # Create sample Java file
+          cat > src/main/java/com/example/demo/DemoApp.java << 'EOF'
+          package com.example.demo;
+          
+          public class DemoApp {
+              public String getMessage() {
+                  return "Hello from Gradle Publisher!";
+              }
+              
+              public static void main(String[] args) {
+                  System.out.println(new DemoApp().getMessage());
+                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 10:59:39");
+                  System.out.println("Current User's Login: mahabaleshwars");
+              }
+          }
+          EOF
+          
+          # Create settings.gradle
+          cat > settings.gradle << 'EOF'
+          rootProject.name = 'demo-library'
+          EOF
+          
+          # Create build.gradle with proper group/artifact naming
+          cat > build.gradle << 'EOF'
+          plugins {
+              id 'java-library'
+              id 'maven-publish'
+              id 'signing'
+          }
+          
+          group = 'io.github.mahabaleshwars'
+          version = '1.0.0-SNAPSHOT'
+          archivesBaseName = 'demo-library'
+          
+          sourceCompatibility = '11'
+          targetCompatibility = '11'
+          
+          repositories {
+              mavenCentral()
+          }
+          
+          dependencies {
+              testImplementation 'junit:junit:4.13.2'
+          }
+          
+          java {
+              withJavadocJar()
+              withSourcesJar()
+          }
+          
+          publishing {
+              publications {
+                  mavenJava(MavenPublication) {
+                      from components.java
+                      
+                      artifactId = 'demo-library'
+                      
+                      pom {
+                          name = 'Demo Library'
+                          description = 'Demo project for GitHub Actions Java publishing with Gradle'
+                          url = 'https://github.com/mahabaleshwars/Java-PR-Test'
+                          licenses {
+                              license {
+                                  name = 'MIT License'
+                                  url = 'http://www.opensource.org/licenses/mit-license.php'
+                              }
+                          }
+                          developers {
+                              developer {
+                                  id = 'mahabaleshwars'
+                                  name = 'Developer Name'
+                                  email = 'developer@example.com'
+                              }
+                          }
+                          scm {
+                              connection = 'scm:git:git://github.com/mahabaleshwars/Java-PR-Test.git'
+                              developerConnection = 'scm:git:ssh://github.com:mahabaleshwars/Java-PR-Test.git'
+                              url = 'https://github.com/mahabaleshwars/Java-PR-Test'
+                          }
+                      }
+                  }
+              }
+              
+              repositories {
+                  maven {
+                      name = "GitHubPackages"
+                      url = uri("https://maven.pkg.github.com/mahabaleshwars/Java-PR-Test")
+                      credentials {
+                          username = System.getenv("GITHUB_ACTOR")
+                          password = System.getenv("GITHUB_TOKEN")
+                      }
+                  }
+              }
+          }
+          
+          signing {
+              required { !version.endsWith("SNAPSHOT") && gradle.taskGraph.hasTask("publish") }
+              sign publishing.publications.mavenJava
+          }
+          
+          tasks.withType(Javadoc) {
+              options.addStringOption('Xdoclint:none', '-quiet')
+          }
+          
+          task projectInfo {
+              doLast {
+                  println "Gradle Demo Project"
+                  println "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 10:59:39"
+                  println "Current User's Login: mahabaleshwars"
+              }
+          }
+          EOF
+      
       - name: Verify gradlew permissions
         shell: bash
         run: |
+          ls -la || echo "Directory listing failed"
           ls -la gradlew || echo "No gradlew file"
-          
-          # Make executable again just to be sure
-          if [ -f "gradlew" ]; then
-            chmod +x gradlew
-          fi
+          chmod +x gradlew || echo "chmod failed"
       
-      # Use platform-specific commands
+      # Platform-specific build and publish commands
       - name: Build with Gradle (Windows)
         if: runner.os == 'Windows'
         shell: cmd
-        run: gradlew.bat build
-      
+        run: gradlew.bat build --info
+
       - name: Build with Gradle (Unix)
         if: runner.os != 'Windows'
         shell: bash
-        run: ./gradlew build
+        run: ./gradlew build --info
+      
+      - name: Check dependencies
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            ./gradlew.bat dependencies --info
+          else
+            ./gradlew dependencies --info
+          fi
       
       - name: Publish to GitHub Packages (Windows)
         if: runner.os == 'Windows'
         shell: cmd
-        run: gradlew.bat publish
+        run: gradlew.bat publish --info --stacktrace
         env:
-          USERNAME: ${{ github.actor }}
-          PASSWORD: ${{ github.token }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ github.token }}
           
       - name: Publish to GitHub Packages (Unix)
         if: runner.os != 'Windows'
         shell: bash
-        run: ./gradlew publish
+        run: ./gradlew publish --info --stacktrace
         env:
-          USERNAME: ${{ github.actor }}
-          PASSWORD: ${{ github.token }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ github.token }}
       
       - name: Report status
         run: |
-          echo "Successfully published with Gradle"
-          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 10:57:39"
+          echo "Gradle Publishing Workflow"
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 10:59:39"
           echo "Current User's Login: mahabaleshwars"
