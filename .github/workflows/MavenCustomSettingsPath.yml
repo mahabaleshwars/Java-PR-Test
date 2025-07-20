@@ -10,7 +10,6 @@ jobs:
     name: Build with custom settings on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         distribution: [oracle, temurin, zulu, liberica, corretto, microsoft, semeru]
@@ -50,7 +49,7 @@ jobs:
               
               public static void main(String[] args) {
                   System.out.println(new DemoApp().getMessage());
-                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 16:30:54");
+                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 16:35:24");
                   System.out.println("Current User's Login: mahabaleshwars");
               }
           }
@@ -107,14 +106,30 @@ jobs:
           </project>
           EOF
       
-      - name: Show custom settings.xml location
+      # Handle settings.xml display differently for each OS
+      - name: Show settings.xml (Unix)
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           echo "Settings.xml location: ${{ github.workspace }}/settings.xml"
-          cat ${{ github.workspace }}/settings.xml
+          cat ${{ github.workspace }}/settings.xml || echo "Settings file not found"
           
-          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 16:30:54"
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 16:35:24"
           echo "Current User's Login: mahabaleshwars"
+          
+      - name: Show settings.xml (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          Write-Output "Settings.xml location: ${{ github.workspace }}\settings.xml"
+          if (Test-Path "${{ github.workspace }}\settings.xml") {
+            Get-Content "${{ github.workspace }}\settings.xml"
+          } else {
+            Write-Output "Settings file not found"
+          }
+          
+          Write-Output "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 16:35:24"
+          Write-Output "Current User's Login: mahabaleshwars"
       
       - name: Build with Maven using custom settings
         run: mvn -B package --file pom.xml -s ${{ github.workspace }}/settings.xml
@@ -125,8 +140,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
       
       - name: Report status
-        shell: bash
         run: |
           echo "Successfully built with custom settings path"
-          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 16:30:54"
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 16:35:24"
           echo "Current User's Login: mahabaleshwars"
