@@ -10,6 +10,7 @@ jobs:
     name: Build with custom settings on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         distribution: [temurin]
@@ -18,6 +19,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       
       - name: Set up JDK with custom settings path
         uses: actions/setup-java@v4
@@ -29,22 +32,101 @@ jobs:
           server-password: GITHUB_TOKEN
           settings-path: ${{ github.workspace }}
       
-      - name: Show custom settings location
+      - name: Create project structure
+        shell: bash
+        run: |
+          mkdir -p src/main/java/com/example/demo
+          
+      - name: Create Java class
+        shell: bash
+        run: |
+          cat > src/main/java/com/example/demo/DemoApp.java << 'EOF'
+          package com.example.demo;
+          
+          public class DemoApp {
+              public String getMessage() {
+                  return "Hello from Custom Settings Maven!";
+              }
+              
+              public static void main(String[] args) {
+                  System.out.println(new DemoApp().getMessage());
+                  System.out.println("Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 16:30:54");
+                  System.out.println("Current User's Login: mahabaleshwars");
+              }
+          }
+          EOF
+      
+      - name: Create pom.xml with valid structure
+        shell: bash
+        run: |
+          cat > pom.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <project xmlns="http://maven.apache.org/POM/4.0.0"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+              <modelVersion>4.0.0</modelVersion>
+              
+              <groupId>com.example</groupId>
+              <artifactId>demo-app</artifactId>
+              <version>1.0.0-SNAPSHOT</version>
+              <packaging>jar</packaging>
+              
+              <name>Demo App with Custom Settings</name>
+              <description>Demo project for GitHub Actions Java custom settings</description>
+              
+              <properties>
+                  <java.version>11</java.version>
+                  <maven.compiler.source>${java.version}</maven.compiler.source>
+                  <maven.compiler.target>${java.version}</maven.compiler.target>
+                  <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+              </properties>
+              
+              <!-- Use only one repository section -->
+              <distributionManagement>
+                  <repository>
+                      <id>github</id>
+                      <name>GitHub Packages</name>
+                      <url>https://maven.pkg.github.com/${GITHUB_REPOSITORY}</url>
+                  </repository>
+              </distributionManagement>
+              
+              <build>
+                  <plugins>
+                      <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.11.0</version>
+                      </plugin>
+                      <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-jar-plugin</artifactId>
+                          <version>3.3.0</version>
+                      </plugin>
+                  </plugins>
+              </build>
+          </project>
+          EOF
+      
+      - name: Show custom settings.xml location
         shell: bash
         run: |
           echo "Settings.xml location: ${{ github.workspace }}/settings.xml"
           cat ${{ github.workspace }}/settings.xml
+          
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 16:30:54"
+          echo "Current User's Login: mahabaleshwars"
       
       - name: Build with Maven using custom settings
         run: mvn -B package --file pom.xml -s ${{ github.workspace }}/settings.xml
       
-      - name: Publish to GitHub Packages (Dry Run)
+      - name: Run Maven effective-pom to verify settings
         run: mvn help:effective-pom -s ${{ github.workspace }}/settings.xml
         env:
           GITHUB_TOKEN: ${{ github.token }}
       
       - name: Report status
+        shell: bash
         run: |
-          echo "Successfully used custom settings path"
-          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 10:25:51"
+          echo "Successfully built with custom settings path"
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 16:30:54"
           echo "Current User's Login: mahabaleshwars"
