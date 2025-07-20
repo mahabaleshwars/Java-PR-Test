@@ -13,8 +13,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        distribution: [temurin]
-        java-version: [11]
+        distribution: [oracle, temurin, zulu, liberica, corretto, microsoft, semeru]
+        java-version: [17,21]
     
     steps:
       - name: Checkout code
