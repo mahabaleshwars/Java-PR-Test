@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for better reliability
       
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -28,20 +30,52 @@ jobs:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
       
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
-        with:
-          gradle-version: wrapper
+      # Create Gradle wrapper explicitly instead of using gradle-build-action to initialize it
+      - name: Create Gradle Wrapper
+        if: runner.os == 'Linux' # Run only on Linux to avoid duplicate runs
+        run: |
+          mkdir -p gradle/wrapper
+          wget -O gradle/wrapper/gradle-wrapper.jar https://github.com/gradle/gradle/raw/master/gradle/wrapper/gradle-wrapper.jar
+          cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
+          distributionBase=GRADLE_USER_HOME
+          distributionPath=wrapper/dists
+          distributionUrl=https\://services.gradle.org/distributions/gradle-8.5-bin.zip
+          networkTimeout=10000
+          validateDistributionUrl=true
+          zipStoreBase=GRADLE_USER_HOME
+          zipStorePath=wrapper/dists
+          EOF
+          
+          cat > gradlew << 'EOF'
+          #!/bin/sh
+          exec java -classpath gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain "$@"
+          EOF
+          
+          cat > gradlew.bat << 'EOF'
+          @echo off
+          java -classpath gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain %*
+          EOF
+          
+          chmod +x gradlew
       
-      - name: Make gradlew executable
-        if: runner.os != 'Windows'
-        run: chmod +x ./gradlew
-      
+      # Now use the wrapper directly instead of the gradle-build-action
       - name: Build with Gradle
-        run: ./gradlew build
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            ./gradlew.bat build
+          else
+            ./gradlew build
+          fi
+        shell: bash
       
       - name: Publish to GitHub Packages
-        run: ./gradlew publish
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            ./gradlew.bat publish
+          else
+            ./gradlew publish
+          fi
+        shell: bash
         env:
           USERNAME: ${{ github.actor }}
           PASSWORD: ${{ github.token }}
@@ -49,5 +83,5 @@ jobs:
       - name: Report status
         run: |
           echo "Successfully published with Gradle"
-          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 10:25:51"
+          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 10:55:24"
           echo "Current User's Login: mahabaleshwars"
