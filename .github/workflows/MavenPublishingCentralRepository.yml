@@ -2,6 +2,8 @@ name: Maven Publishing to Central Repository
 
 on:
   workflow_dispatch:
+  release:
+    types: [created]
 
 jobs:
   build:
@@ -12,18 +14,22 @@ jobs:
         java-version: [17]
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
     - name: Set up Apache Maven Central
-    - uses: actions/setup-java@v4
-      with: # running setup-java again overwrites the settings.xml
+      uses: actions/setup-java@v4
+      with:
         distribution: 'jetbrains'
         java-version: ${{ matrix.java-version }}
-        server-id: central # Value of the distributionManagement/repository/id field of the pom.xml
-        server-username: MAVEN_USERNAME # env variable for username in deploy
-        server-password: MAVEN_CENTRAL_TOKEN # env variable for token in deploy
-        gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }} # Value of the GPG private key to import
-        gpg-passphrase: MY_GPG_PASSPHRASE # env variable for GPG private key passphrase
+        server-id: central
+        server-username: MAVEN_USERNAME
+        server-password: MAVEN_CENTRAL_TOKEN
+        gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+        gpg-passphrase: MY_GPG_PASSPHRASE
+    
+    - name: Display Java version
+      run: java -version
     
     - name: Build with Maven
       run: mvn -B clean package
@@ -32,7 +38,7 @@ jobs:
       run: |
         echo "Checking effective POM..."
         mvn help:effective-pom
-        echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-23 06:04:19"
+        echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-23 06:07:54"
         echo "Current User's Login: mahabaleshwars"
 
     - name: Publish to Apache Maven Central
@@ -41,12 +47,11 @@ jobs:
         MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
         MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
         MY_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-
+        
     - name: Verify deployment status
       if: success()
       run: |
         echo "Deployment completed successfully"
         echo "Check Sonatype Repository Manager for your artifacts"
-        echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-23 06:04:19"
+        echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-23 06:07:54"
         echo "Current User's Login: mahabaleshwars"
-
