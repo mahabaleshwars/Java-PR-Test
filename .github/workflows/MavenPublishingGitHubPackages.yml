@@ -12,6 +12,7 @@ jobs:
     name: Publish to GitHub Packages with ${{ matrix.distribution }} JDK ${{ matrix.java-version }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         distribution: [temurin, zulu, liberica]
         java-version: [11, 17]
