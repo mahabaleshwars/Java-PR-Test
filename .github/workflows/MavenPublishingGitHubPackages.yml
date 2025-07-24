@@ -15,26 +15,40 @@ jobs:
       matrix:
         distribution: [temurin, zulu, liberica]
         java-version: [11, 17]
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up JDK
         uses: aparnajyothi-y/setup-java@toolversions-regex-update
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
           server-id: github
-      
+
+      - name: Import GPG key
+        run: |
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
+          echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+          echo RELOADAGENT | gpg-connect-agent
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+
+      - name: Set GPG_TTY
+        run: echo "GPG_TTY=$(tty)" >> $GITHUB_ENV
+
       - name: Build with Maven
         run: mvn -B package --file pom.xml
-      
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
       - name: Publish to GitHub Packages
         run: mvn deploy
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
       - name: Report status
         run: |
           echo "Successfully published to GitHub Packages with ${{ matrix.distribution }} JDK ${{ matrix.java-version }}"
