@@ -15,28 +15,35 @@ jobs:
       matrix:
         distribution: [temurin, zulu, liberica]
         java-version: [11, 17]
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up JDK
         uses: aparnajyothi-y/setup-java@toolversions-regex-update
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
           server-id: github
-      
-      - name: Build with Maven
-        run: mvn -B package --file pom.xml
-      
-      - name: Publish to GitHub Packages
-        run: mvn deploy
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-      
-      - name: Report status
+
+      - name: Import GPG key
         run: |
-          echo "Successfully published to GitHub Packages with ${{ matrix.distribution }} JDK ${{ matrix.java-version }}"
-          echo "Current Date and Time (UTC - YYYY-MM-DD HH:MM:SS formatted): 2025-07-20 10:25:51"
-          echo "Current User's Login: mahabaleshwars"
+          echo "$GPG_PRIVATE_KEY" | base64 --decode | gpg --batch --import
+          KEY_ID=$(gpg --list-secret-keys --with-colons | grep '^sec' | cut -d':' -f5)
+          echo "GPG_KEY_ID=$KEY_ID" >> $GITHUB_ENV
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+
+      - name: Configure GPG for Maven
+        run: |
+          echo "use-agent" >> ~/.gnupg/gpg.conf
+          echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
+          echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+          echo RELOADAGENT | gpg-connect-agent
+          echo "GPG_TTY=$(tty)" >> $GITHUB_ENV
+
+      - name: Build and Sign with Maven
+        run: mvn -B deploy -Dgpg.passphrase="" --file pom.xml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
