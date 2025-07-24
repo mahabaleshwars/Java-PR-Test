@@ -3,7 +3,9 @@ name: Java Custom Installation Tests
 on:
   workflow_dispatch:
   pull_request:
-    branches: [main]
+    branches: [ main ]
+  push:
+    branches: [ main ]
 
 jobs:
   test-java-package:
@@ -29,7 +31,7 @@ jobs:
       - name: Setup Compilation JDK
         if: matrix.package == 'jre'
         id: setup-compile-jdk
-        uses: actions/setup-java@v4
+        uses: aparnajyothi-y/setup-java@toolversions-regex-update
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -82,7 +84,7 @@ jobs:
       # Now set up the target Java package (JDK or JRE)
       - name: Setup Java with custom package type
         id: setup-java
-        uses: actions/setup-java@v4
+        uses: aparnajyothi-y/setup-java@toolversions-regex-update
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -165,7 +167,7 @@ jobs:
 
       - name: Setup Java with custom architecture
         id: setup-java
-        uses: actions/setup-java@v4
+        uses: aparnajyothi-y/setup-java@toolversions-regex-update
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -248,7 +250,7 @@ jobs:
       - name: Setup Java from file (Linux/macOS)
         if: runner.os != 'Windows'
         id: setup-java-unix
-        uses: actions/setup-java@v4
+        uses: aparnajyothi-y/setup-java@toolversions-regex-update
         with:
           distribution: 'jdkfile'
           jdkFile: ${{ runner.temp }}/java_package.tar.gz
@@ -258,7 +260,7 @@ jobs:
       - name: Setup Java from file (Windows)
         if: runner.os == 'Windows'
         id: setup-java-win
-        uses: actions/setup-java@v4
+        uses: aparnajyothi-y/setup-java@toolversions-regex-update
         with:
           distribution: 'jdkfile'
           jdkFile: ${{ runner.temp }}/java_package.zip
@@ -331,7 +333,7 @@ jobs:
         id: fetch_latest_jdk
 
       - name: Setup Java from latest file
-        uses: actions/setup-java@v4
+        uses: aparnajyothi-y/setup-java@toolversions-regex-update
         with:
           distribution: 'jdkfile'
           jdkFile: ${{ runner.temp }}/java_package.tar.gz

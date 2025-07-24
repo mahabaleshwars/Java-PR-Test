@@ -2,11 +2,10 @@ name: Gradle Publishing Workflow
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [ main ]
   push:
-    branches: [main]
-    paths:
-      - 'build.gradle'
-      - 'src/**'
+    branches: [ main ]
 
 jobs:
   publish-with-gradle:
@@ -26,7 +25,7 @@ jobs:
           fetch-depth: 0 # Fetch all history for better reliability
       
       - name: Set up JDK
-        uses: actions/setup-java@v4
+        uses: aparnajyothi-y/setup-java@toolversions-regex-update
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}

@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [ main ]
+  push:
+    branches: [ main ]
 
 jobs:
   gradle-cache-test:
@@ -40,7 +42,7 @@ jobs:
         
       - name: Setup Java with Gradle cache
         id: setup-java
-        uses: actions/setup-java@v4
+        uses: aparnajyothi-y/setup-java@toolversions-regex-update
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -111,7 +113,7 @@ jobs:
         
       - name: Setup Java with Maven cache
         id: setup-java
-        uses: actions/setup-java@v4
+        uses: aparnajyothi-y/setup-java@toolversions-regex-update
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -169,7 +171,7 @@ jobs:
         
       - name: Setup Java with SBT cache
         id: setup-java
-        uses: actions/setup-java@v4
+        uses: aparnajyothi-y/setup-java@toolversions-regex-update
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}

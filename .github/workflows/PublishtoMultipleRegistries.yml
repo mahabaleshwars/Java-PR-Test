@@ -2,8 +2,10 @@ name: Publish to Multiple Registries
 
 on:
   workflow_dispatch:
-  release:
-    types: [created]
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
 
 jobs:
   publish-to-multiple-registries:
@@ -16,7 +18,7 @@ jobs:
       
       # First publish to GitHub Packages
       - name: Set up JDK for GitHub Packages
-        uses: actions/setup-java@v4
+        uses: aparnajyothi-y/setup-java@toolversions-regex-update
         with:
           distribution: temurin
           java-version: 11
@@ -32,7 +34,7 @@ jobs:
       
       # Then publish to Maven Central
       - name: Set up JDK for Maven Central
-        uses: actions/setup-java@v4
+        uses: aparnajyothi-y/setup-java@toolversions-regex-update
         with:
           distribution: temurin
           java-version: 11

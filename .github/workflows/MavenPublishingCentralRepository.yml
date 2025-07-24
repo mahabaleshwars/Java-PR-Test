@@ -2,8 +2,10 @@ name: Maven Publishing to Central Repository
 
 on:
   workflow_dispatch:
-  release:
-    types: [created]
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
 
 jobs:
   build:
@@ -18,7 +20,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up Apache Maven Central
-      uses: actions/setup-java@v4
+      uses: aparnajyothi-y/setup-java@toolversions-regex-update
       with:
         distribution: 'jetbrains'
         java-version: ${{ matrix.java-version }}

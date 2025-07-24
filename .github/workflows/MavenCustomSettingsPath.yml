@@ -3,7 +3,9 @@ name: Maven with Custom Settings Path
 on:
   workflow_dispatch:
   pull_request:
-    branches: [main]
+    branches: [ main ]
+  push:
+    branches: [ main ]
 
 jobs:
   build-with-custom-settings:
@@ -22,7 +24,7 @@ jobs:
           fetch-depth: 0
       
       - name: Set up JDK with custom settings path
-        uses: actions/setup-java@v4
+        uses: aparnajyothi-y/setup-java@toolversions-regex-update
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
