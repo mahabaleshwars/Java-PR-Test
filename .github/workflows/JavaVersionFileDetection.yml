@@ -1,0 +1,36 @@
+name: Java Version File Detection
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/java-version-file-detection.yml
+      - .java-version
+      - .tool-versions
+
+jobs:
+  java-version-file:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create example version files
+        run: |
+          echo "17.0.7" > .java-version
+            echo "java 21.0.1" > .tool-versions
+          echo "Created .java-version:"
+          cat .java-version
+          echo "Created .tool-versions:"
+          cat .tool-versions
+
+      - name: Setup Java from file
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version-file: .java-version
+          mvn-toolchain-vendor: 'Eclipse Temurin'
+
+      - name: Show effective Java
+        run: java -version
+
+      - name: Show toolchains
+        run: cat ~/.m2/toolchains.xml || true
