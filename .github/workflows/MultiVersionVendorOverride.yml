@@ -1,0 +1,31 @@
+name: Multi-version install with single vendor override
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/multi-version-vendor-override.yml
+
+jobs:
+  multi-version:
+    strategy:
+      fail-fast: false
+      matrix:
+        distribution: [temurin, zulu, corretto]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java (two versions, one vendor override)
+        uses: actions/setup-java@v5
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: |
+            8
+            11
+          mvn-toolchain-vendor: 'Eclipse Temurin'
+      - name: Verify versions
+        run: |
+          echo "Java runtime:"
+          java -version
+          echo "Toolchains file:"
+          cat ~/.m2/toolchains.xml
