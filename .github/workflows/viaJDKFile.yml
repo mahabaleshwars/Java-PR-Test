@@ -1,4 +1,4 @@
-name: JDK 6 via jdkfile with Oracle vendor (Toolchain Entry)
+name: JDK 17 (Oracle distribution) with Maven Toolchain Vendor/ID
 on:
   workflow_dispatch:
   push:
@@ -6,27 +6,23 @@ on:
       - .github/workflows/install-jdkfile-oracle-vendor.yml
 
 jobs:
-  jdkfile-oracle:
+  oracle-jdk-17:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout (only needed if your build sources are required later)
+      - name: Checkout (only needed if build sources are required later)
         uses: actions/checkout@v4
 
-      - name: Download legacy JDK archive
-        run: |
-          set -euo pipefail
-          download_url="https://example.com/java/jdk/6u45-b06/jdk-6u45-linux-x64.tar.gz"
-          wget -O "$RUNNER_TEMP/java_package.tar.gz" "$download_url"
-          ls -lh "$RUNNER_TEMP/java_package.tar.gz"
-
-      - name: Setup Java (Oracle JDK 6 via jdkfile) with custom vendor for Maven Toolchain
-        uses: actions/setup-java@v4
+      # No manual download needed for a standard supported JDK 17 distribution.
+      # Using the 'oracle' distribution directly instead of jdkfile.
+      - name: Setup Java (Oracle JDK 17) with custom vendor for Maven Toolchain
+        uses: actions/setup-java@v5
         with:
-          distribution: jdkfile
-          jdkFile: ${{ runner.temp }}/java_package.tar.gz
-          java-version: '1.6'
-          architecture: x64
+          distribution: oracle
+          java-version: '17'
+          # mvn-toolchain-vendor will set the vendor entry in the generated toolchain.
           mvn-toolchain-vendor: 'Oracle'
+          # (Optional) If you want to control the toolchain id explicitly, uncomment below:
+          # mvn-toolchain-id: 'Oracle_17'
 
       - name: Show Java version
         run: java -version
