@@ -20,7 +20,7 @@ jobs:
           ls -lh "$RUNNER_TEMP/java_package.tar.gz"
 
       - name: Setup Java (Oracle JDK 6 via jdkfile) with custom vendor for Maven Toolchain
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: jdkfile
           jdkFile: ${{ runner.temp }}/java_package.tar.gz
