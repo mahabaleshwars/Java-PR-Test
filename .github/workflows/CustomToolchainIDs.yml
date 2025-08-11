@@ -1,0 +1,33 @@
+name: Custom Toolchain IDs (multiple versions)
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/custom-toolchain-id-multi.yml
+
+jobs:
+  custom-id-multiple:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java with multiple versions and custom IDs
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: |
+            8
+            11
+          mvn-toolchain-id: |
+            something_else
+            something_other
+          mvn-toolchain-vendor: 'Eclipse Temurin'
+      - name: Validate toolchains
+        run: |
+          echo "Toolchains file:"
+          cat ~/.m2/toolchains.xml
+          echo
+          echo "Ensuring both IDs are present:"
+          grep -q "something_else" ~/.m2/toolchains.xml
+          grep -q "something_other" ~/.m2/toolchains.xml
+          echo "Both custom IDs found."
