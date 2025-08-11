@@ -1,0 +1,22 @@
+name: Custom Toolchain ID (single version)
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/custom-toolchain-id-single.yml
+
+jobs:
+  custom-id-single:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java with custom toolchain ID
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '11'
+          mvn-toolchain-id: 'some_other_id'
+          # mvn-toolchain-vendor: 'Eclipse Temurin'
+      - name: Inspect toolchains
+        run: cat ~/.m2/toolchains.xml
