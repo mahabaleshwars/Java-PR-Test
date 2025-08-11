@@ -1,0 +1,38 @@
+name: JDK 6 via jdkfile with Oracle vendor (Toolchain Entry)
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/install-jdkfile-oracle-vendor.yml
+
+jobs:
+  jdkfile-oracle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (only needed if your build sources are required later)
+        uses: actions/checkout@v4
+
+      - name: Download legacy JDK archive
+        run: |
+          set -euo pipefail
+          download_url="https://example.com/java/jdk/6u45-b06/jdk-6u45-linux-x64.tar.gz"
+          wget -O "$RUNNER_TEMP/java_package.tar.gz" "$download_url"
+          ls -lh "$RUNNER_TEMP/java_package.tar.gz"
+
+      - name: Setup Java (Oracle JDK 6 via jdkfile) with custom vendor for Maven Toolchain
+        uses: actions/setup-java@v5
+        with:
+          distribution: jdkfile
+          jdkFile: ${{ runner.temp }}/java_package.tar.gz
+          java-version: '1.6'
+          architecture: x64
+          mvn-toolchain-vendor: 'Oracle'
+
+      - name: Show Java version
+        run: java -version
+
+      - name: Show generated Maven toolchains.xml
+        run: |
+          echo "----- toolchains.xml -----"
+          cat ~/.m2/toolchains.xml || echo "No toolchains.xml found"
+          echo "--------------------------"
