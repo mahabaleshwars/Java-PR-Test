@@ -41,6 +41,6 @@ jobs:
           echo "GPG_TTY=$(tty)" >> $GITHUB_ENV
 
       - name: Build and Sign with Maven
-        run: mvn -B deploy -Dgpg.passphrase="" --file pom.xml
+        run: mvn -B deploy -Dgpg.passphrase="${{ secrets.MAVEN_GPG_PASSPHRASE }}" --file pom.xml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
