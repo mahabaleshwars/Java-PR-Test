@@ -81,7 +81,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup ${{ matrix.distribution }} JDK ${{ matrix.java-version }}
-        uses: actions/setup-java@dependabot/github_actions/actions/checkout-5
+        uses: chiranjib-swain/setup-java@update-readme-java-setup
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -179,7 +179,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup EA ${{ matrix.distribution }} JDK ${{ matrix.java-version }}
-        uses: actions/setup-java@dependabot/github_actions/actions/checkout-5
+        uses: chiranjib-swain/setup-java@update-readme-java-setup
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
