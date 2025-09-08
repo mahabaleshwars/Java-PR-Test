@@ -81,7 +81,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup ${{ matrix.distribution }} JDK ${{ matrix.java-version }}
-        uses: lmvysakh/setup-java@docs-update-checkout-java-v5
+        uses: actions/setup-java@dependabot/npm_and_yarn/prettier-3.6.2
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -179,7 +179,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup EA ${{ matrix.distribution }} JDK ${{ matrix.java-version }}
-        uses: lmvysakh/setup-java@docs-update-checkout-java-v5
+        uses:  actions/setup-java@dependabot/npm_and_yarn/prettier-3.6.2
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
