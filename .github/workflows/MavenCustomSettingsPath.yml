@@ -20,7 +20,7 @@ jobs:
           fetch-depth: 0
       
       - name: Set up JDK with custom settings path
-        uses: aparnajyothi-y/setup-java@toolversions-regex-update
+        uses: mahabaleshwars/setup-java@fix/graalvm-api-rate-limit
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}

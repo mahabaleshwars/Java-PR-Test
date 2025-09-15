@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Java with custom toolchain ID
-        uses: actions/setup-java@v4
+        uses: mahabaleshwars/setup-java@fix/graalvm-api-rate-limit
         with:
           distribution: temurin
           java-version: '11'

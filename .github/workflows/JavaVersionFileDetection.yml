@@ -23,7 +23,7 @@ jobs:
           cat .tool-versions
 
       - name: Setup Java from file
-        uses: actions/setup-java@v4
+        uses: mahabaleshwars/setup-java@fix/graalvm-api-rate-limit
         with:
           distribution: temurin
           java-version-file: .java-version

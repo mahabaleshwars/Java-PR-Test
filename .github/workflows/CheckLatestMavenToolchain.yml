@@ -42,7 +42,7 @@ jobs:
 
       - name: Setup Java with check-latest=${{ matrix.check-latest }}
         id: setup-java
-        uses: aparnajyothi-y/setup-java@toolversions-regex-update
+        uses: mahabaleshwars/setup-java@fix/graalvm-api-rate-limit
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -144,7 +144,7 @@ jobs:
 
       - name: Setup Java with check-latest=${{ matrix.check-latest }}
         id: setup-java
-        uses: aparnajyothi-y/setup-java@toolversions-regex-update
+        uses: mahabaleshwars/setup-java@fix/graalvm-api-rate-limit
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -218,7 +218,7 @@ jobs:
 
       - name: Setup multiple JDKs with check-latest=true
         id: setup-java
-        uses: aparnajyothi-y/setup-java@toolversions-regex-update
+        uses: mahabaleshwars/setup-java@fix/graalvm-api-rate-limit
         with:
           distribution: ${{ matrix.distribution }}
           java-version: |
@@ -278,7 +278,7 @@ jobs:
         
       - name: Setup Java with multiple versions
         id: setup-java
-        uses: aparnajyothi-y/setup-java@toolversions-regex-update
+        uses: mahabaleshwars/setup-java@fix/graalvm-api-rate-limit
         with:
           distribution: 'temurin'
           java-version: |
