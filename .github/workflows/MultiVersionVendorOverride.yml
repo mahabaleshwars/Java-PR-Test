@@ -1,9 +1,13 @@
 name: Multi-version install with single vendor override
 on:
-  workflow_dispatch:
   push:
-    paths:
-      - .github/workflows/multi-version-vendor-override.yml
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+  
 
 jobs:
   multi-version:

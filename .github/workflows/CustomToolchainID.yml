@@ -1,9 +1,13 @@
 name: Custom Toolchain ID (single version)
 on:
-  workflow_dispatch:
   push:
-    paths:
-      - .github/workflows/custom-toolchain-id-single.yml
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+  
 
 jobs:
   custom-id-single:

@@ -1,11 +1,13 @@
 name: Java Version File Detection
 on:
-  workflow_dispatch:
   push:
-    paths:
-      - .github/workflows/java-version-file-detection.yml
-      - .java-version
-      - .tool-versions
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+ 
 
 jobs:
   java-version-file:

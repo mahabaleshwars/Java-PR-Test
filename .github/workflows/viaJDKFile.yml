@@ -1,10 +1,13 @@
 name: JDK 17 (Oracle distribution) with Maven Toolchain Vendor/ID
 on:
-  workflow_dispatch:
   push:
-    paths:
-      - .github/workflows/install-jdkfile-oracle-vendor.yml
-
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+  
 jobs:
   oracle-jdk-17:
     runs-on: ubuntu-latest
