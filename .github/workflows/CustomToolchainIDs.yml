@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Java with multiple versions and custom IDs
-        uses: mahabaleshwars/setup-java@fix/graalvm-api-rate-limit
+        uses: actions/setup-java@dependabot/npm_and_yarn/eslint-config-prettier-10.1.8
         with:
           distribution: temurin
           java-version: |

@@ -44,7 +44,7 @@ jobs:
         
       - name: Setup Java with Gradle cache
         id: setup-java
-        uses: mahabaleshwars/setup-java@fix/graalvm-api-rate-limit
+        uses: actions/setup-java@dependabot/npm_and_yarn/eslint-config-prettier-10.1.8
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -115,7 +115,7 @@ jobs:
         
       - name: Setup Java with Maven cache
         id: setup-java
-        uses: mahabaleshwars/setup-java@fix/graalvm-api-rate-limit
+        uses: actions/setup-java@dependabot/npm_and_yarn/eslint-config-prettier-10.1.8
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -173,7 +173,7 @@ jobs:
         
       - name: Setup Java with SBT cache
         id: setup-java
-        uses: mahabaleshwars/setup-java@fix/graalvm-api-rate-limit
+        uses: actions/setup-java@dependabot/npm_and_yarn/eslint-config-prettier-10.1.8
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
