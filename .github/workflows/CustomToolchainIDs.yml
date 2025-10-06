@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Java with multiple versions and custom IDs
-        uses: actions/setup-java@dependabot/npm_and_yarn/eslint-config-prettier-10.1.8
+        uses: priya-kinthali/setup-java@enhance-error-logging
         with:
           distribution: temurin
           java-version: |

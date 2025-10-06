@@ -18,7 +18,7 @@ jobs:
       # No manual download needed for a standard supported JDK 17 distribution.
       # Using the 'oracle' distribution directly instead of jdkfile.
       - name: Setup Java (Oracle JDK 17) with custom vendor for Maven Toolchain
-        uses: actions/setup-java@dependabot/npm_and_yarn/eslint-config-prettier-10.1.8
+        uses: priya-kinthali/setup-java@enhance-error-logging
         with:
           distribution: oracle
           java-version: '17'
