@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Zulu ${{ matrix.java }}
-        uses: priya-kinthali/setup-java@enhance-error-logging
+        uses: the-mod/setup-java@patch-1
         with:
           distribution: zulu
           java-version: ${{ matrix.java }}
@@ -38,7 +38,7 @@ jobs:
 
       - name: Set up Temurin for Maven Central publish
         if: matrix.os == 'ubuntu-latest' && matrix.java == '21'
-        uses: priya-kinthali/setup-java@enhance-error-logging
+        uses: the-mod/setup-java@patch-1
         with:
           distribution: temurin
           java-version: 21

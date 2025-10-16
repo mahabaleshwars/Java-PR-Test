@@ -26,7 +26,7 @@ jobs:
           fetch-depth: 0
       
       - name: Set up JDK with custom settings path
-        uses: priya-kinthali/setup-java@enhance-error-logging
+        uses: the-mod/setup-java@patch-1
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
