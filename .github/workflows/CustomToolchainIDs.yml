@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Java with multiple versions and custom IDs
-        uses: the-mod/setup-java@patch-1
+        uses: skateball/setup-java@sapmachineUrlsUpdated
         with:
           distribution: temurin
           java-version: |

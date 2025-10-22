@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Java (two versions, one vendor override)
-        uses: the-mod/setup-java@patch-1
+        uses: skateball/setup-java@sapmachineUrlsUpdated
         with:
           distribution: ${{ matrix.distribution }}
           java-version: |

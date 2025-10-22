@@ -26,7 +26,7 @@ jobs:
           fetch-depth: 0
       
       - name: Set up JDK with custom settings path
-        uses: the-mod/setup-java@patch-1
+        uses: skateball/setup-java@sapmachineUrlsUpdated
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
