@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Java (two versions, one vendor override)
-        uses: skateball/setup-java@sapmachineUrlsUpdated
+        uses: priya-kinthali/setup-java@enhance-error-logging-retry
         with:
           distribution: ${{ matrix.distribution }}
           java-version: |

@@ -25,7 +25,7 @@ jobs:
           cat .tool-versions
 
       - name: Setup Java from file
-        uses: skateball/setup-java@sapmachineUrlsUpdated
+        uses: priya-kinthali/setup-java@enhance-error-logging-retry
         with:
           distribution: temurin
           java-version-file: .java-version

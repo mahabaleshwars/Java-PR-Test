@@ -26,7 +26,7 @@ jobs:
           fetch-depth: 0
       
       - name: Set up JDK with custom settings path
-        uses: skateball/setup-java@sapmachineUrlsUpdated
+        uses: priya-kinthali/setup-java@enhance-error-logging-retry
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}

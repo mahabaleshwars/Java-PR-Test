@@ -18,7 +18,7 @@ jobs:
       # No manual download needed for a standard supported JDK 17 distribution.
       # Using the 'oracle' distribution directly instead of jdkfile.
       - name: Setup Java (Oracle JDK 17) with custom vendor for Maven Toolchain
-        uses: skateball/setup-java@sapmachineUrlsUpdated
+        uses: priya-kinthali/setup-java@enhance-error-logging-retry
         with:
           distribution: oracle
           java-version: '17'

@@ -44,7 +44,7 @@ jobs:
         
       - name: Setup Java with Gradle cache
         id: setup-java
-        uses: skateball/setup-java@sapmachineUrlsUpdated
+        uses: priya-kinthali/setup-java@enhance-error-logging-retry
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -115,7 +115,7 @@ jobs:
         
       - name: Setup Java with Maven cache
         id: setup-java
-        uses: skateball/setup-java@sapmachineUrlsUpdated
+        uses: priya-kinthali/setup-java@enhance-error-logging-retry
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -173,7 +173,7 @@ jobs:
         
       - name: Setup Java with SBT cache
         id: setup-java
-        uses: skateball/setup-java@sapmachineUrlsUpdated
+        uses: priya-kinthali/setup-java@enhance-error-logging-retry
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
