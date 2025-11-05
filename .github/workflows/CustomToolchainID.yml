@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Java with custom toolchain ID
-        uses: priya-kinthali/setup-java@enhance-error-logging-retry
+        uses: guicamest/setup-java@feat/669/support_sdkmanrc
         with:
           distribution: temurin
           java-version: '11'

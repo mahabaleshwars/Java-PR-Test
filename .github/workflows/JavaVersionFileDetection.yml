@@ -25,7 +25,7 @@ jobs:
           cat .tool-versions
 
       - name: Setup Java from file
-        uses: priya-kinthali/setup-java@enhance-error-logging-retry
+        uses: guicamest/setup-java@feat/669/support_sdkmanrc
         with:
           distribution: temurin
           java-version-file: .java-version
