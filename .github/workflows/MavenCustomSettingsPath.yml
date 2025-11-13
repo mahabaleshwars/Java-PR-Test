@@ -26,7 +26,7 @@ jobs:
           fetch-depth: 0
       
       - name: Set up JDK with custom settings path
-        uses: guicamest/setup-java@feat/669/support_sdkmanrc
+        uses: RealCLanger/setup-java@sapmachineURL
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
