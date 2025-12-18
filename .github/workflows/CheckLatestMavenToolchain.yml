@@ -48,7 +48,7 @@ jobs:
 
       - name: Setup Java with check-latest=${{ matrix.check-latest }}
         id: setup-java
-        uses: RealCLanger/setup-java@sapmachineURL
+        uses: salmanmkc/setup-java@upgrade-actions-cache-v5
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -150,7 +150,7 @@ jobs:
 
       - name: Setup Java with check-latest=${{ matrix.check-latest }}
         id: setup-java
-        uses: RealCLanger/setup-java@sapmachineURL
+        uses: salmanmkc/setup-java@upgrade-actions-cache-v5
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -224,7 +224,7 @@ jobs:
 
       - name: Setup multiple JDKs with check-latest=true
         id: setup-java
-        uses: RealCLanger/setup-java@sapmachineURL
+        uses: salmanmkc/setup-java@upgrade-actions-cache-v5
         with:
           distribution: ${{ matrix.distribution }}
           java-version: |
@@ -284,7 +284,7 @@ jobs:
         
       - name: Setup Java with multiple versions
         id: setup-java
-        uses: RealCLanger/setup-java@sapmachineURL
+        uses: salmanmkc/setup-java@upgrade-actions-cache-v5
         with:
           distribution: 'temurin'
           java-version: |

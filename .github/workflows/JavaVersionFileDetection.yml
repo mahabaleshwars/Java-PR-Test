@@ -25,7 +25,7 @@ jobs:
           cat .tool-versions
 
       - name: Setup Java from file
-        uses: RealCLanger/setup-java@sapmachineURL
+        uses: salmanmkc/setup-java@upgrade-actions-cache-v5
         with:
           distribution: temurin
           java-version-file: .java-version

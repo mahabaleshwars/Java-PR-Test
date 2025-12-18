@@ -26,7 +26,7 @@ jobs:
           fetch-depth: 0
       
       - name: Set up JDK with custom settings path
-        uses: RealCLanger/setup-java@sapmachineURL
+        uses: salmanmkc/setup-java@upgrade-actions-cache-v5
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}

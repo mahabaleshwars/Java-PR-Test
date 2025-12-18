@@ -33,7 +33,7 @@ jobs:
       - name: Setup Compilation JDK
         if: matrix.package == 'jre'
         id: setup-compile-jdk
-        uses: RealCLanger/setup-java@sapmachineURL
+        uses: salmanmkc/setup-java@upgrade-actions-cache-v5
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -86,7 +86,7 @@ jobs:
       # Now set up the target Java package (JDK or JRE)
       - name: Setup Java with custom package type
         id: setup-java
-        uses: RealCLanger/setup-java@sapmachineURL
+        uses: salmanmkc/setup-java@upgrade-actions-cache-v5
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -169,7 +169,7 @@ jobs:
 
       - name: Setup Java with custom architecture
         id: setup-java
-        uses: RealCLanger/setup-java@sapmachineURL
+        uses: salmanmkc/setup-java@upgrade-actions-cache-v5
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -252,7 +252,7 @@ jobs:
       - name: Setup Java from file (Linux/macOS)
         if: runner.os != 'Windows'
         id: setup-java-unix
-        uses: RealCLanger/setup-java@sapmachineURL
+        uses: salmanmkc/setup-java@upgrade-actions-cache-v5
         with:
           distribution: 'jdkfile'
           jdkFile: ${{ runner.temp }}/java_package.tar.gz
@@ -262,7 +262,7 @@ jobs:
       - name: Setup Java from file (Windows)
         if: runner.os == 'Windows'
         id: setup-java-win
-        uses: RealCLanger/setup-java@sapmachineURL
+        uses: salmanmkc/setup-java@upgrade-actions-cache-v5
         with:
           distribution: 'jdkfile'
           jdkFile: ${{ runner.temp }}/java_package.zip
@@ -335,7 +335,7 @@ jobs:
         id: fetch_latest_jdk
 
       - name: Setup Java from latest file
-        uses: RealCLanger/setup-java@sapmachineURL
+        uses: salmanmkc/setup-java@upgrade-actions-cache-v5
         with:
           distribution: 'jdkfile'
           jdkFile: ${{ runner.temp }}/java_package.tar.gz
