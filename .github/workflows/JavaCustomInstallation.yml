@@ -33,7 +33,7 @@ jobs:
       - name: Setup Compilation JDK
         if: matrix.package == 'jre'
         id: setup-compile-jdk
-        uses: salmanmkc/setup-java@upgrade-actions-cache-v5
+        uses: priya-kinthali/setup-java@update-gradle-cache-docs
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -86,7 +86,7 @@ jobs:
       # Now set up the target Java package (JDK or JRE)
       - name: Setup Java with custom package type
         id: setup-java
-        uses: salmanmkc/setup-java@upgrade-actions-cache-v5
+        uses: priya-kinthali/setup-java@update-gradle-cache-docs
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -169,7 +169,7 @@ jobs:
 
       - name: Setup Java with custom architecture
         id: setup-java
-        uses: salmanmkc/setup-java@upgrade-actions-cache-v5
+        uses: priya-kinthali/setup-java@update-gradle-cache-docs
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -252,7 +252,7 @@ jobs:
       - name: Setup Java from file (Linux/macOS)
         if: runner.os != 'Windows'
         id: setup-java-unix
-        uses: salmanmkc/setup-java@upgrade-actions-cache-v5
+        uses: priya-kinthali/setup-java@update-gradle-cache-docs
         with:
           distribution: 'jdkfile'
           jdkFile: ${{ runner.temp }}/java_package.tar.gz
@@ -262,7 +262,7 @@ jobs:
       - name: Setup Java from file (Windows)
         if: runner.os == 'Windows'
         id: setup-java-win
-        uses: salmanmkc/setup-java@upgrade-actions-cache-v5
+        uses: priya-kinthali/setup-java@update-gradle-cache-docs
         with:
           distribution: 'jdkfile'
           jdkFile: ${{ runner.temp }}/java_package.zip
@@ -335,7 +335,7 @@ jobs:
         id: fetch_latest_jdk
 
       - name: Setup Java from latest file
-        uses: salmanmkc/setup-java@upgrade-actions-cache-v5
+        uses: priya-kinthali/setup-java@update-gradle-cache-docs
         with:
           distribution: 'jdkfile'
           jdkFile: ${{ runner.temp }}/java_package.tar.gz

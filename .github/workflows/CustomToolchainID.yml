@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Java with custom toolchain ID
-        uses: salmanmkc/setup-java@upgrade-actions-cache-v5
+        uses: priya-kinthali/setup-java@update-gradle-cache-docs
         with:
           distribution: temurin
           java-version: '11'
