@@ -1,0 +1,4 @@
+rootProject.name = 'Java-PR-Test'
+
+// Include sub-project
+include 'sub-project'
