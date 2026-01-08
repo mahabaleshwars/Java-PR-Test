@@ -1,0 +1,102 @@
+name: Test Cache Optimization Patterns
+
+on: 
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs: 
+  # Scenario:  Compile and unit test (writes to cache)
+  compile-and-unit-test:
+    name: Compile and Unit Test
+    runs-on:  ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: 
+          distribution: temurin
+          java-version: 17
+
+      - name:  Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+      
+      - name: Set execute permissions for gradlew
+        run: chmod +x ./gradlew
+
+      - name:  Compile and run unit tests
+        run: ./gradlew compileJava compileTestJava test
+
+      - name:  Download integration test dependencies
+        run: ./gradlew downloadIntegTestDependencies
+
+  # Scenario: Integration tests (read-only cache)
+  integration-tests: 
+    name: Integration Test - ${{ matrix.suite }}
+    needs: compile-and-unit-test
+    strategy:
+      matrix: 
+        suite: [api, web, database, messaging]
+    runs-on: ubuntu-latest
+    steps: 
+      - uses: actions/checkout@v4
+      - uses:  actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version:  17
+
+      - name: Setup Gradle with read-only cache
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only:  true
+
+      - name: Set execute permissions for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Run integration tests - ${{ matrix.suite }}
+        run:  ./gradlew integrationTest -Psuite=${{ matrix. suite }}
+
+  # Scenario: Branch-specific cache writing
+  branch-specific-caching:
+    name: Branch-Specific Caching
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: 
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Gradle with branch-specific caching
+        uses:  gradle/actions/setup-gradle@v5
+        with: 
+          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop' }}
+
+      - name: Set execute permissions for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Run build
+        run: ./gradlew build
+
+  # Scenario:  Exclude local build cache when using remote
+  remote-build-cache:
+    name: Remote Build Cache
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution:  temurin
+          java-version: 17
+
+      - name: Setup Gradle excluding local build cache
+        uses:  gradle/actions/setup-gradle@v5
+        with: 
+          gradle-home-cache-excludes: |
+            caches/build-cache-1
+      
+      - name: Set execute permissions for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Run build with remote cache
+        run: ./gradlew build --build-cache
