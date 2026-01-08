@@ -1,0 +1,148 @@
+name: Test Dependency Graph
+
+on:
+  push:
+    branches:  [main]
+  pull_request: 
+  workflow_dispatch: 
+
+permissions:
+  contents: write
+
+jobs:
+  # Scenario:  Dependency graph - generate only
+  dependency-graph-generate:
+    name:  Dependency Graph - Generate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution:  temurin
+          java-version: 17
+
+      - name: Setup Gradle to generate dependency graph
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          dependency-graph: generate
+
+      - name:  Run build
+        run: ./gradlew build
+
+  # Scenario:  Dependency graph - generate and submit
+  dependency-graph-generate-and-submit:
+    name: Dependency Graph - Generate and Submit
+    runs-on: ubuntu-latest
+    steps: 
+      - uses: actions/checkout@v4
+      - uses:  actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version:  17
+
+      - name: Setup Gradle to generate and submit dependency graphs
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          dependency-graph: generate-and-submit
+
+      - name: Run the usual CI build
+        run: ./gradlew build
+
+  # Scenario:  Dependency graph - generate and upload
+  dependency-graph-generate-and-upload: 
+    name: Dependency Graph - Generate and Upload
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution:  temurin
+          java-version: 17
+
+      - name: Setup Gradle to generate and upload dependency graphs
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          dependency-graph: generate-and-upload
+
+      - name: Run build
+        run: ./gradlew build
+
+  # Scenario:  Dependency graph - download and submit (for fork PRs)
+  dependency-graph-download-and-submit: 
+    name: Dependency Graph - Download and Submit
+    needs: dependency-graph-generate-and-upload
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Gradle to download and submit dependency graphs
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          dependency-graph: download-and-submit
+
+  # Scenario:  Dependency graph with failure handling
+  dependency-graph-fail-on-error:
+    name:  Dependency Graph - Fail on Error
+    runs-on: ubuntu-latest
+    steps: 
+      - uses:  actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Gradle with strict dependency graph handling
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          dependency-graph: generate-and-submit
+          dependency-graph-continue-on-failure:  false
+
+      - name:  Run build
+        run: ./gradlew build
+
+  # Scenario: Selective dependency graph generation
+  dependency-graph-selective: 
+    name:  Dependency Graph - Selective
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution:  temurin
+          java-version: 17
+
+      - name: Setup Gradle to generate and submit dependency graphs
+        uses:  gradle/actions/setup-gradle@v5
+        with: 
+          dependency-graph:  generate-and-submit
+
+      - name: Build the app, generating dependency graph
+        run:  ./gradlew :my-app:assemble
+
+      - name: Run checks without dependency graph generation
+        run: ./gradlew check
+        env:
+          GITHUB_DEPENDENCY_GRAPH_ENABLED: 'false'
+
+#   # Scenario: Dependency graph with custom plugin repository
+#   dependency-graph-custom-repository:
+#     name:  Dependency Graph - Custom Repository
+#     runs-on: ubuntu-latest
+#     steps: 
+#       - uses: actions/checkout@v4
+#       - uses:  actions/setup-java@v4
+#         with:
+#           distribution: temurin
+#           java-version:  17
+
+#       - name: Setup Gradle to generate and submit dependency graphs
+#         uses: gradle/actions/setup-gradle@v5
+#         with:
+#           dependency-graph: generate-and-submit
+
+#       - name: Run build with custom plugin repository
+#         run:  ./gradlew build
+#         env:
+#           GRADLE_PLUGIN_REPOSITORY_URL: 'https://plugins.gradle.org/m2/'
+#           GRADLE_PLUGIN_REPOSITORY_USERNAME:  "username"
+#           GRADLE_PLUGIN_REPOSITORY_PASSWORD:  ${{ secrets.MY_REPOSITORY_PASSWORD }}

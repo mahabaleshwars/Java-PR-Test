@@ -1,0 +1,177 @@
+name: Test Build Reporting
+
+on:
+  push:
+    branches:  [main]
+  pull_request: 
+  workflow_dispatch: 
+
+permissions:
+  pull-requests: write
+
+jobs:
+  # Scenario: Job Summary - always
+  job-summary-always:
+    name: Job Summary - Always
+    runs-on: ubuntu-latest
+    steps: 
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: 
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Gradle with job summary always
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          add-job-summary:  'always'
+
+      - name: Run Gradle build
+        run: ./gradlew build
+
+  # Scenario: Job Summary - on-failure
+  job-summary-on-failure:
+    name:  Job Summary - On Failure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: 
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Gradle with job summary on failure
+        uses: gradle/actions/setup-gradle@v5
+        with: 
+          add-job-summary: 'on-failure'
+
+      - name: Run Gradle build
+        run: ./gradlew build
+
+  # Scenario: Job Summary - never
+  job-summary-never:
+    name: Job Summary - Never
+    runs-on: ubuntu-latest
+    steps: 
+      - uses: actions/checkout@v4
+      - uses:  actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version:  17
+
+      - name: Setup Gradle with job summary disabled
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          add-job-summary: 'never'
+
+      - name:  Run Gradle build
+        run: ./gradlew build
+
+  # Scenario: PR comment with job summary
+  pr-comment-always:
+    name:  PR Comment - Always
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: 
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Gradle with PR comment
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          add-job-summary-as-pr-comment: 'always'
+
+      - name: Run Gradle build
+        run:  ./gradlew build
+
+  # Scenario: PR comment on failure only
+  pr-comment-on-failure: 
+    name: PR Comment - On Failure
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps: 
+      - uses: actions/checkout@v4
+      - uses:  actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version:  17
+
+      - name: Setup Gradle with PR comment on failure
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          add-job-summary-as-pr-comment: 'on-failure'
+
+      - name: Run Gradle build
+        run: ./gradlew build
+
+  # Scenario: Build Scan link as step output
+  build-scan-output:
+    name:  Build Scan Output
+    runs-on:  ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: 
+          distribution: temurin
+          java-version: 17
+
+      - name:  Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Run Gradle build with scan
+        id: gradle-build
+        run: ./gradlew build --scan
+
+      - name: Use Build Scan URL
+        if: steps.gradle-build.outputs.build-scan-url != ''
+        run: |
+          echo "Build Scan URL: ${{ steps.gradle-build.outputs.build-scan-url }}"
+
+  # Scenario: Skip build result capture for integration tests
+  skip-build-result-capture:
+    name:  Skip Build Result Capture
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution:  temurin
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Run main build
+        run:  ./gradlew build
+
+      - name: Run integration tests (excluded from summary)
+        run: ./gradlew integrationTest
+        env:
+          GRADLE_ACTIONS_SKIP_BUILD_RESULT_CAPTURE: 'true'
+
+  # Scenario:  Save build outputs with upload-artifact
+  save-build-outputs:
+    name: Save Build Outputs
+    runs-on: ubuntu-latest
+    steps: 
+      - uses:  actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Gradle
+        uses:  gradle/actions/setup-gradle@v5
+
+      - name:  Run build with Gradle wrapper
+        run: ./gradlew build --scan
+
+      - name:  Upload build reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-reports
+          path: '**/build/reports/'
