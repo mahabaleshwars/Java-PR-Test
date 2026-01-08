@@ -21,9 +21,6 @@ jobs:
       - name: Setup Gradle
         uses:  gradle/actions/setup-gradle@v5
 
-      - name: Execute Gradle build
-        run: ./gradlew build
-
   # Scenario:  Build with a specific Gradle version
   specific-gradle-version: 
     name:  Specific Gradle Version
