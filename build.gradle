@@ -7,11 +7,64 @@ plugins {
 group = 'com.example'
 version = '1.0.0'
 
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+}
+
 java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
     withJavadocJar()
     withSourcesJar()
 }
 
+// Create source sets for integration tests
+sourceSets {
+    integrationTest {
+        java. srcDir 'src/integrationTest/java'
+        resources.srcDir 'src/integrationTest/resources'
+        compileClasspath += sourceSets.main. output + sourceSets.test.output
+        runtimeClasspath += sourceSets.main. output + sourceSets.test.output
+    }
+}
+
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly. extendsFrom testRuntimeOnly
+}
+
+// Task to download integration test dependencies
+task downloadIntegTestDependencies {
+    description = 'Downloads all integration test dependencies'
+    doLast {
+        configurations.integrationTestRuntimeClasspath.files
+        println 'Integration test dependencies downloaded'
+    }
+}
+
+// Integration test task
+task integrationTest(type: Test) {
+    description = 'Runs integration tests'
+    group = 'verification'
+    
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest. runtimeClasspath
+    
+    // Support for suite selection
+    if (project.hasProperty('suite')) {
+        include "**/${project.property('suite')}/**"
+    }
+    
+    shouldRunAfter test
+}
+
+check.dependsOn integrationTest
+
+// Publishing configuration
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -38,8 +91,8 @@ publishing {
                 }
                 
                 scm {
-                    connection = 'scm:git:git://github.com/mahabaleshwars/Java-PR-Test.git'
-                    developerConnection = 'scm:git:ssh://github.com:mahabaleshwars/Java-PR-Test.git'
+                    connection = 'scm:git:git://github.com/mahabaleshwars/Java-PR-Test. git'
+                    developerConnection = 'scm:git:ssh://github.com:mahabaleshwars/Java-PR-Test. git'
                     url = 'https://github.com/mahabaleshwars/Java-PR-Test'
                 }
             }
@@ -50,7 +103,7 @@ publishing {
         maven {
             name = "OSSRH"
             url = version.endsWith('SNAPSHOT') 
-                  ? "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+                  ? "https://s01.oss.sonatype. org/content/repositories/snapshots/"
                   : "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
             credentials {
                 username = System.getenv("MAVEN_USERNAME")
@@ -65,5 +118,5 @@ signing {
     def signingPassword = findProperty("signingPassword") ?: System.getenv("GPG_PASSPHRASE")
     
     useInMemoryPgpKeys(signingKey, signingPassword)
-    sign publishing.publications.mavenJava
+    sign publishing. publications.mavenJava
 }
