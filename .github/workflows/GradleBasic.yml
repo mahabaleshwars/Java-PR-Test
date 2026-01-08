@@ -2,6 +2,7 @@ name: Test Basic Usage and Gradle Versions
 
 on:
  push:
+ workflow_dispatch:
 
 jobs:
   # Scenario:  General usage - basic setup with Gradle wrapper
