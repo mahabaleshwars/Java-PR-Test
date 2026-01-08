@@ -1,11 +1,5 @@
 name: JDK 17 (Oracle distribution) with Maven Toolchain Vendor/ID
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
   
 jobs:

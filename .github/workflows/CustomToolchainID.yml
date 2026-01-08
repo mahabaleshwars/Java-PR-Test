@@ -1,11 +1,5 @@
 name: Custom Toolchain ID (single version)
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
   
 

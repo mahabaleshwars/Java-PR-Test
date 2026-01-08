@@ -1,12 +1,6 @@
 name: Java Custom Installation Tests
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
