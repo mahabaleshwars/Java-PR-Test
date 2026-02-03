@@ -12,7 +12,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         distribution: [temurin, zulu, liberica, corretto, microsoft, semeru, oracle, dragonwell, sapmachine, graalvm, jetbrains]
-        java-version: [8, 11, 17, 21]
+        java-version: [8, 11, 17, 21, 25]
         exclude:
           # Oracle only supports JDK 17+
           - distribution: oracle
@@ -81,7 +81,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup ${{ matrix.distribution }} JDK ${{ matrix.java-version }}
-        uses: priya-kinthali/setup-java@update-gradle-cache-docs
+        uses: alaahong/setup-java@feature/update_java_scope_25
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
@@ -179,7 +179,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup EA ${{ matrix.distribution }} JDK ${{ matrix.java-version }}
-        uses: priya-kinthali/setup-java@update-gradle-cache-docs
+        uses: alaahong/setup-java@feature/update_java_scope_25
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java-version }}
